@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exit Interview AI — สรุปบทสัมภาษณ์พนักงานลาออก</title>
+<meta name="description" content="ระบบสรุปผล Exit Interview ด้วย AI">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="gate" class="gate">
+  <form class="gate-card" id="loginForm">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <h1>Exit Interview AI</h1>
+        <p>ระบบสรุปบทสัมภาษณ์พนักงานลาออก</p>
+      </div>
+    </div>
+
+    <div id="gateConfigWarn" class="notice notice-warn" hidden>
+      ยังไม่ได้ตั้งค่า Supabase — กด <b>ตั้งค่าการเชื่อมต่อ</b> ด้านล่างก่อนเข้าใช้งาน
+    </div>
+
+    <label class="field">
+      <span>อีเมล</span>
+      <input type="email" id="email" autocomplete="username" required placeholder="hr@toyota.co.th">
+    </label>
+    <label class="field">
+      <span>รหัสผ่าน</span>
+      <input type="password" id="password" autocomplete="current-password" required placeholder="••••••••">
+    </label>
+
+    <div id="loginError" class="notice notice-error" hidden></div>
+
+    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+    <button type="button" class="btn btn-ghost btn-block" id="openConfigFromGate">ตั้งค่าการเชื่อมต่อ</button>
+
+    <p class="gate-foot">ข้อมูล Exit Interview เป็นข้อมูลส่วนบุคคล — บัญชีผู้ใช้ถูกสร้างโดยผู้ดูแลระบบ HR เท่านั้น</p>
+  </form>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" hidden>
+  <header class="topbar">
+    <div class="brand brand-sm">
+      <span class="brand-mark"></span>
+      <div>
+        <h1>Exit Interview AI</h1>
+        <p>สรุปบทสัมภาษณ์พนักงานลาออกด้วย AI</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="userChip" class="chip"></span>
+      <button class="btn btn-ghost btn-sm" id="openConfig">ตั้งค่า</button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab is-active" data-tab="single" role="tab">สรุปรายคน</button>
+    <button class="tab" data-tab="batch" role="tab">สรุปทั้งไฟล์ (Batch)</button>
+    <button class="tab" data-tab="history" role="tab">ประวัติ</button>
+  </nav>
+
+  <main class="wrap">
+
+    <!-- ---------- SINGLE ---------- -->
+    <section class="panel" data-panel="single">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head">
+            <h2>1. ใส่ข้อมูลบทสัมภาษณ์</h2>
+            <button class="btn btn-ghost btn-sm" id="fillSample">ใส่ตัวอย่าง</button>
+          </div>
+
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".txt,.md,.csv,.tsv,.json,.docx" hidden>
+            <p><b>ลากไฟล์มาวาง</b> หรือ <button type="button" class="linklike" id="browseBtn">เลือกไฟล์</button></p>
+            <small>.txt .md .csv .json — หรือพิมพ์/วางข้อความในช่องด้านล่างได้เลย</small>
+          </div>
+
+          <label class="field">
+            <span>ข้อความบทสัมภาษณ์ / บันทึกการพูดคุย <em id="charCount">0 ตัวอักษร</em></span>
+            <textarea id="rawText" rows="14" placeholder="วางบทสัมภาษณ์ทั้งหมดที่นี่ ไม่ต้องจัดรูปแบบ — AI จะอ่านและสรุปให้เอง&#10;&#10;เช่น&#10;ถาม: อะไรคือเหตุผลหลักที่ตัดสินใจลาออก&#10;ตอบ: ..."></textarea>
+          </label>
+
+          <details class="meta-details">
+            <summary>ข้อมูลพนักงาน (ไม่บังคับ — ช่วยให้สรุปแม่นขึ้น)</summary>
+            <div class="grid-meta">
+              <label class="field"><span>ชื่อ-สกุล</span><input id="m_name" type="text"></label>
+              <label class="field"><span>รหัสพนักงาน</span><input id="m_code" type="text"></label>
+              <label class="field"><span>หน่วยงาน / แผนก</span><input id="m_dept" type="text"></label>
+              <label class="field"><span>ตำแหน่ง</span><input id="m_pos" type="text"></label>
+              <label class="field"><span>อายุงาน</span><input id="m_tenure" type="text" placeholder="เช่น 3 ปี 4 เดือน"></label>
+              <label class="field"><span>วันสุดท้าย</span><input id="m_lastday" type="date"></label>
+            </div>
+          </details>
+
+          <label class="check">
+            <input type="checkbox" id="saveToDb" checked>
+            <span>บันทึกผลลง Supabase</span>
+          </label>
+
+          <button class="btn btn-primary btn-block" id="runSingle">
+            <span class="btn-label">สรุปด้วย AI</span>
+          </button>
+        </div>
+
+        <div class="card card-result">
+          <div class="card-head">
+            <h2>2. ผลสรุป</h2>
+            <div class="card-head-actions" id="singleActions" hidden>
+              <button class="btn btn-ghost btn-sm" id="copyResult">คัดลอก</button>
+              <button class="btn btn-ghost btn-sm" id="downloadJson">JSON</button>
+              <button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์</button>
+            </div>
+          </div>
+          <div id="singleOut">
+            <div class="empty">
+              <span class="empty-icon">📋</span>
+              <p>ยังไม่มีผลสรุป</p>
+              <small>ใส่ข้อความทางซ้าย แล้วกด “สรุปด้วย AI”</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- BATCH ---------- -->
+    <section class="panel" data-panel="batch" hidden>
+      <div class="card">
+        <div class="card-head"><h2>อัปโหลดไฟล์รวม (Excel / CSV)</h2></div>
+        <p class="hint">
+          หนึ่งแถว = พนักงานหนึ่งคน ระบบจะให้เลือกว่าคอลัมน์ไหนคือเนื้อหาสัมภาษณ์
+          รองรับ .xlsx .xls .csv — ไฟล์ถูกอ่านในเบราว์เซอร์ ไม่ได้อัปโหลดขึ้นที่ไหน
+        </p>
+        <div class="dropzone" id="batchDrop">
+          <input type="file" id="batchFile" accept=".xlsx,.xls,.csv" hidden>
+          <p><b>ลากไฟล์มาวาง</b> หรือ <button type="button" class="linklike" id="batchBrowse">เลือกไฟล์</button></p>
+          <small>.xlsx .xls .csv</small>
+        </div>
+        <div id="batchMap" hidden>
+          <div class="grid-meta">
+            <label class="field"><span>คอลัมน์เนื้อหาสัมภาษณ์ *</span><select id="col_text"></select></label>
+            <label class="field"><span>ชื่อ-สกุล</span><select id="col_name"></select></label>
+            <label class="field"><span>รหัสพนักงาน</span><select id="col_code"></select></label>
+            <label class="field"><span>แผนก</span><select id="col_dept"></select></label>
+            <label class="field"><span>ตำแหน่ง</span><select id="col_pos"></select></label>
+            <label class="field"><span>อายุงาน</span><select id="col_tenure"></select></label>
+          </div>
+          <div class="batch-bar">
+            <span id="batchInfo" class="chip"></span>
+            <label class="check"><input type="checkbox" id="batchSave" checked><span>บันทึกลง Supabase</span></label>
+            <button class="btn btn-primary" id="runBatch">เริ่มสรุปทั้งหมด</button>
+          </div>
+        </div>
+        <div class="progress" id="batchProgress" hidden>
+          <div class="progress-bar"><div id="batchBarFill"></div></div>
+          <span id="batchStatus"></span>
+        </div>
+      </div>
+
+      <div id="batchResult" hidden>
+        <div class="card">
+          <div class="card-head">
+            <h2>ภาพรวม</h2>
+            <div class="card-head-actions">
+              <button class="btn btn-ghost btn-sm" id="exportCsv">ดาวน์โหลด CSV</button>
+              <button class="btn btn-ghost btn-sm" id="exportJson">ดาวน์โหลด JSON</button>
+            </div>
+          </div>
+          <div id="dashboard"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>รายคน</h2></div>
+          <div id="batchList" class="batch-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- HISTORY ---------- -->
+    <section class="panel" data-panel="history" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>ประวัติการสรุป</h2>
+          <button class="btn btn-ghost btn-sm" id="reloadHistory">รีเฟรช</button>
+        </div>
+        <input type="search" id="historySearch" class="search" placeholder="ค้นหาชื่อ / แผนก / เหตุผล…">
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ CONFIG MODAL ============ -->
+<dialog id="configModal" class="modal">
+  <form method="dialog" class="modal-card" id="configForm">
+    <h2>ตั้งค่าการเชื่อมต่อ Supabase</h2>
+    <p class="hint">ค่าเหล่านี้เก็บไว้ในเบราว์เซอร์ของคุณเท่านั้น (localStorage) — หาได้จาก Supabase Dashboard → Project Settings → API</p>
+    <label class="field">
+      <span>Project URL</span>
+      <input type="url" id="cfgUrl" placeholder="https://xxxxxxxx.supabase.co" required>
+    </label>
+    <label class="field">
+      <span>Anon / Publishable key</span>
+      <input type="text" id="cfgKey" placeholder="eyJhbGciOi..." required>
+    </label>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="cfgCancel">ยกเลิก</button>
+      <button type="submit" class="btn btn-primary">บันทึก</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="./assets/config.js"></script>
+<script type="module" src="./assets/app.js"></script>
+</body>
+</html>

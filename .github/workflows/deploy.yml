@@ -1,0 +1,57 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+
+      # เขียนค่า Supabase ลง config.js ตอน build จะได้ไม่ต้อง commit ค่าลง repo
+      # ตั้งที่ Settings → Secrets and variables → Actions → Variables:
+      #   SUPABASE_URL, SUPABASE_ANON_KEY
+      # anon key เป็นค่า public โดยการออกแบบ ความปลอดภัยอยู่ที่ RLS
+      # ถ้าไม่ตั้ง Variables ไว้ เว็บจะขึ้นในโหมดออฟไลน์ (เก็บข้อมูลในเครื่องผู้ใช้)
+      - name: Inject Supabase config
+        if: vars.SUPABASE_URL != ''
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const cfg = {
+              SUPABASE_URL: process.env.SUPABASE_URL,
+              SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+            };
+            fs.writeFileSync(
+              "assets/config.js",
+              "window.APP_CONFIG = " + JSON.stringify(cfg, null, 2) + ";\n"
+            );
+          '
+          echo "config.js written:"
+          cat assets/config.js
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,7 @@
+# ตั้งชื่อโปรเจกต์ในเครื่อง (ไม่ต้องตรงกับชื่อบน Supabase)
+project_id = "exit-interview-ai"
+
+[functions.summarize]
+# ให้ Supabase ตรวจ JWT ที่ gateway ก่อนเรียกฟังก์ชัน
+# (ตัวฟังก์ชันเองก็ตรวจซ้ำอีกชั้นด้วย auth.getUser())
+verify_jwt = true

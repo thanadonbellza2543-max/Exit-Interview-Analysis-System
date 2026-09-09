@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ระบบวิเคราะห์ Exit Interview</title>
+<meta name="description" content="เครื่องมือวิเคราะห์บทสัมภาษณ์พนักงานลาออก ทำงานในเบราว์เซอร์ ข้อมูลไม่ออกจากเครื่อง">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+
+<!-- หน้าล็อกอิน — แสดงเฉพาะเมื่อเชื่อมต่อ Supabase แล้ว -->
+<div id="gate" class="gate" hidden>
+  <form class="gate-card" id="loginForm">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <h1>ระบบวิเคราะห์ Exit Interview</h1>
+        <p>สำหรับทีม HR</p>
+      </div>
+    </div>
+
+    <label class="field">
+      <span>อีเมล</span>
+      <input type="email" id="loginEmail" autocomplete="username" required placeholder="hr@company.co.th">
+    </label>
+    <label class="field">
+      <span>รหัสผ่าน</span>
+      <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="••••••••">
+    </label>
+
+    <div id="loginError" class="notice notice-error" hidden></div>
+
+    <button type="submit" class="btn btn-primary btn-block" id="loginBtn">เข้าสู่ระบบ</button>
+    <p class="gate-foot">
+      ข้อมูล Exit Interview เป็นข้อมูลส่วนบุคคล<br>
+      บัญชีผู้ใช้สร้างโดยผู้ดูแลระบบเท่านั้น ไม่เปิดให้สมัครเอง
+    </p>
+  </form>
+</div>
+
+<header class="topbar">
+  <div class="brand brand-sm">
+    <span class="brand-mark"></span>
+    <div>
+      <h1>ระบบวิเคราะห์ Exit Interview</h1>
+      <p>วิเคราะห์ในเบราว์เซอร์ · ข้อมูลไม่ออกจากเครื่อง</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span class="chip chip-ok" id="modeChip" title="ไม่มีการส่งข้อมูลออกนอกเครื่องนี้">🔒 ออฟไลน์</span>
+    <span class="chip" id="userChip" hidden></span>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn" hidden>ออกจากระบบ</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab is-active" data-tab="single" role="tab">วิเคราะห์รายคน</button>
+  <button class="tab" data-tab="batch" role="tab">ทั้งไฟล์<span class="tab-count" id="tabCountBatch" hidden></span></button>
+  <button class="tab" data-tab="history" role="tab">ประวัติ<span class="tab-count" id="tabCountHistory" hidden></span></button>
+  <span class="tabs-gap"></span>
+  <button class="tab tab-minor" data-tab="lexicon" role="tab">คำสำคัญ</button>
+  <button class="tab tab-minor" data-tab="about" role="tab">วิธีอ่านผล</button>
+</nav>
+
+<div class="print-head" aria-hidden="true">
+  <b>รายงานวิเคราะห์ Exit Interview</b>
+  <span id="printDate"></span>
+</div>
+
+<main class="wrap">
+
+  <!-- ---------------- รายคน ---------------- -->
+  <section class="panel" data-panel="single">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <h2>1. ใส่บทสัมภาษณ์</h2>
+          <div class="card-head-actions">
+            <button class="btn btn-ghost btn-sm" id="fillSample">ใส่ตัวอย่าง</button>
+            <button class="btn btn-ghost btn-sm" id="clearSingle">ล้าง</button>
+          </div>
+        </div>
+
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.txt,.md,.csv,.json" hidden>
+          <p><b>ลากไฟล์มาวาง</b> หรือ <button type="button" class="linklike" id="browseBtn">เลือกไฟล์</button></p>
+          <small><b>ฟอร์มสัมภาษณ์ .xlsx</b> (กรอกข้อมูลพนักงานให้อัตโนมัติ) · .txt .md — หรือพิมพ์/วางข้อความในช่องด้านล่างได้เลย</small>
+        </div>
+
+        <label class="field">
+          <span>ข้อความบทสัมภาษณ์ <em id="charCount">0 ตัวอักษร</em></span>
+          <textarea id="rawText" rows="15" placeholder="วางบทสัมภาษณ์ทั้งหมดที่นี่ ไม่ต้องจัดรูปแบบ&#10;&#10;ถาม: อะไรคือเหตุผลหลักที่ตัดสินใจลาออก&#10;ตอบ: ..."></textarea>
+        </label>
+
+        <details class="meta-details" id="metaDetails">
+          <summary>ข้อมูลพนักงาน (ไม่บังคับ — ช่วยให้ผลแม่นขึ้น)</summary>
+          <div class="grid-meta">
+            <label class="field"><span>ชื่อ-สกุล</span><input id="m_name" type="text"></label>
+            <label class="field"><span>รหัสพนักงาน</span><input id="m_code" type="text"></label>
+            <label class="field"><span>หน่วยงาน / แผนก</span><input id="m_dept" type="text"></label>
+            <label class="field"><span>ตำแหน่ง</span><input id="m_pos" type="text"></label>
+            <label class="field"><span>อายุงาน</span><input id="m_tenure" type="text" placeholder="เช่น 3 ปี 4 เดือน"></label>
+            <label class="field"><span>วันสุดท้าย</span><input id="m_lastday" type="date"></label>
+          </div>
+        </details>
+
+        <div class="action-bar">
+          <label class="check">
+            <input type="checkbox" id="saveHistory" checked>
+            <span>บันทึกลงประวัติ</span>
+          </label>
+          <button class="btn btn-primary" id="runSingle">
+            <span class="btn-label">วิเคราะห์</span>
+            <kbd>Ctrl</kbd><kbd>↵</kbd>
+          </button>
+        </div>
+      </div>
+
+      <div class="card card-result">
+        <div class="card-head">
+          <h2>2. ผลวิเคราะห์</h2>
+          <div class="card-head-actions" id="singleActions" hidden>
+            <button class="btn btn-ghost btn-sm" id="copyResult">คัดลอก</button>
+            <button class="btn btn-ghost btn-sm" id="downloadJson">JSON</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์</button>
+          </div>
+        </div>
+        <div id="singleOut">
+          <div class="empty">
+            <span class="empty-icon">📋</span>
+            <p>ยังไม่มีผลวิเคราะห์</p>
+            <ol class="empty-steps">
+              <li>ลากฟอร์ม <b>.xlsx</b> มาวาง หรือวางข้อความบทสัมภาษณ์</li>
+              <li>กด <b>วิเคราะห์</b></li>
+              <li>อ่านผล แล้วกด <b>พิมพ์</b> หรือ <b>คัดลอก</b> ไปใช้ต่อ</li>
+            </ol>
+            <button class="btn btn-ghost btn-sm" id="emptySample">ลองด้วยตัวอย่าง</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- ทั้งไฟล์ ---------------- -->
+  <section class="panel" data-panel="batch" hidden>
+    <div class="card">
+      <div class="card-head"><h2>อัปโหลดไฟล์รวม</h2></div>
+      <p class="hint">
+        รองรับ 2 แบบ ระบบตรวจให้เองอัตโนมัติ —
+        <b>ฟอร์มสัมภาษณ์ของบริษัท</b> (1 ไฟล์ = 1 คน ลากมาพร้อมกันหลายไฟล์ได้) หรือ
+        <b>ตารางรวม</b> (1 แถว = 1 คน) ·
+        ไฟล์ถูกอ่านในเบราว์เซอร์ ไม่ได้ส่งขึ้นที่ไหน
+      </p>
+      <div class="dropzone" id="batchDrop">
+        <input type="file" id="batchFile" accept=".xlsx,.xls,.csv,.tsv" multiple hidden>
+        <p><b>ลากไฟล์มาวาง (ครั้งละกี่ไฟล์ก็ได้)</b> หรือ <button type="button" class="linklike" id="batchBrowse">เลือกไฟล์</button></p>
+        <small>.csv .tsv <span id="xlsxNote">.xlsx .xls</span></small>
+      </div>
+      <div id="formBar" hidden>
+        <div class="notice notice-ok" id="formInfo"></div>
+        <div class="batch-bar">
+          <label class="check"><input type="checkbox" id="formSaveHistory"><span>บันทึกลงประวัติด้วย</span></label>
+          <button class="btn btn-primary" id="runForms">วิเคราะห์ทั้งหมด</button>
+        </div>
+        <details class="meta-details">
+          <summary>ดูว่าระบบอ่านอะไรจากแต่ละไฟล์ได้บ้าง</summary>
+          <div id="formPreview"></div>
+        </details>
+      </div>
+
+      <div id="batchMap" hidden>
+        <div class="grid-meta">
+          <label class="field"><span>คอลัมน์เนื้อหาสัมภาษณ์ *</span><select id="col_text"></select></label>
+          <label class="field"><span>ชื่อ-สกุล</span><select id="col_name"></select></label>
+          <label class="field"><span>รหัสพนักงาน</span><select id="col_code"></select></label>
+          <label class="field"><span>แผนก</span><select id="col_dept"></select></label>
+          <label class="field"><span>ตำแหน่ง</span><select id="col_pos"></select></label>
+          <label class="field"><span>อายุงาน</span><select id="col_tenure"></select></label>
+        </div>
+        <div class="batch-bar">
+          <span id="batchInfo" class="chip"></span>
+          <label class="check"><input type="checkbox" id="batchSaveHistory"><span>บันทึกลงประวัติด้วย</span></label>
+          <button class="btn btn-primary" id="runBatch">วิเคราะห์ทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="batchResult" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>ภาพรวม</h2>
+          <div class="card-head-actions">
+            <button class="btn btn-ghost btn-sm" id="exportCsv">ดาวน์โหลด CSV</button>
+            <button class="btn btn-ghost btn-sm" id="exportJson">ดาวน์โหลด JSON</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์</button>
+          </div>
+        </div>
+        <div id="dashboard"></div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>รายคน <span class="count-note" id="listCount"></span></h2>
+        </div>
+
+        <div class="list-toolbar">
+          <input type="search" id="batchSearch" class="search" placeholder="ค้นหาชื่อ / แผนก / ประเด็น…">
+          <select id="batchSort" class="sort-select">
+            <option value="severity">เรียงตามความรุนแรง</option>
+            <option value="risk">เรียงตามธงแดง</option>
+            <option value="dept">เรียงตามแผนก</option>
+            <option value="name">เรียงตามชื่อ</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" id="toggleAll">กางทั้งหมด</button>
+        </div>
+        <div class="filter-chips" id="batchFilters"></div>
+
+        <div id="batchList" class="batch-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- ประวัติ ---------------- -->
+  <section class="panel" data-panel="history" hidden>
+
+    <div class="card">
+      <div class="card-head"><h2>ใช้งานร่วมกันในทีม HR</h2></div>
+      <p class="hint" id="teamHint">
+        ระบบไม่มีเซิร์ฟเวอร์กลาง ข้อมูลจึงอยู่ในเครื่องของแต่ละคน —
+        การรวมงานกันทำผ่านไฟล์: แต่ละคนกด <b>ส่งออกเพื่อแชร์</b> แล้วส่งไฟล์ให้คนที่ทำสรุปภาพรวม
+        คนนั้นกด <b>รวมไฟล์จากทีม</b> เลือกได้ทีเดียวหลายไฟล์ ระบบจะข้ามรายการที่ซ้ำให้เอง
+      </p>
+      <div class="grid-meta">
+        <label class="field">
+          <span>ชื่อผู้วิเคราะห์ <em>ติดไปกับผลทุกครั้งที่บันทึก</em></span>
+          <input type="text" id="analystName" placeholder="เช่น น้ำฝน (HR)">
+        </label>
+      </div>
+      <div class="batch-bar">
+        <button class="btn btn-ghost btn-sm" id="exportHistory">ส่งออกเพื่อแชร์</button>
+        <button class="btn btn-ghost btn-sm" id="importHistory">รวมไฟล์จากทีม</button>
+        <input type="file" id="importFile" accept=".json" multiple hidden>
+        <button class="btn btn-ghost btn-sm" id="clearHistory">ล้างทั้งหมด</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>ประวัติสะสม <span class="count-note" id="histCount"></span></h2>
+        <div class="card-head-actions">
+          <button class="btn btn-ghost btn-sm" id="toggleTeamView">ดูภาพรวมรวมทุกคน</button>
+          <button class="btn btn-ghost btn-sm" id="exportHistoryCsv">ดาวน์โหลด CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์</button>
+        </div>
+      </div>
+
+      <div class="list-toolbar">
+        <input type="search" id="historySearch" class="search" placeholder="ค้นหาชื่อ / แผนก / ประเด็น…">
+        <input type="date" id="histFrom" class="date-input" aria-label="ตั้งแต่วันที่">
+        <span class="muted">ถึง</span>
+        <input type="date" id="histTo" class="date-input" aria-label="ถึงวันที่">
+        <button class="btn btn-ghost btn-sm" id="histReset">ล้างตัวกรอง</button>
+      </div>
+      <div class="filter-chips" id="historyFilters"></div>
+
+      <div id="historyDashboard" hidden></div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </section>
+
+  <!-- ---------------- คำสำคัญ ---------------- -->
+  <section class="panel" data-panel="lexicon" hidden>
+    <div class="card">
+      <div class="card-head">
+        <h2>คำสำคัญเพิ่มเติมของหน่วยงาน</h2>
+        <button class="btn btn-ghost btn-sm" id="resetLexicon">คืนค่าเริ่มต้น</button>
+      </div>
+      <p class="hint">
+        ความแม่นของระบบขึ้นกับคำสำคัญโดยตรง ถ้าองค์กรใช้คำเฉพาะ เช่น ชื่อไลน์ผลิต ชื่อระบบภายใน
+        หรือคำแสลงที่พนักงานใช้ ให้เพิ่มไว้ที่นี่ — คั่นด้วยเครื่องหมายจุลภาค <code>,</code>
+        แล้วผลจะเปลี่ยนทันทีในการวิเคราะห์ครั้งถัดไป (บันทึกอัตโนมัติในเครื่องนี้)
+      </p>
+      <div id="lexiconList"></div>
+    </div>
+  </section>
+
+  <!-- ---------------- วิธีอ่านผล ---------------- -->
+  <section class="panel" data-panel="about" hidden>
+    <div class="card">
+      <div class="card-head"><h2>ระบบนี้ทำงานยังไง และเชื่อได้แค่ไหน</h2></div>
+
+      <div class="res-block">
+        <h3>วิธีวิเคราะห์</h3>
+        <p class="res-summary">
+          ระบบจับคู่ <b>คำสำคัญภาษาไทย</b> ในบทสัมภาษณ์กับพจนานุกรม 13 หมวดปัจจัย
+          แล้วให้คะแนนความรุนแรงจาก 4 สัญญาณ ได้แก่ จำนวนคำที่ต่างกันที่พบ ·
+          จำนวนครั้งที่ถูกพูดถึง · คำขยายความรุนแรงที่อยู่ในประโยคเดียวกัน (เช่น “มาก” “ตลอด” “ทนไม่ไหว”) ·
+          และตำแหน่งที่ปรากฏในบทสัมภาษณ์ (เรื่องที่พูดถึงก่อนมักเป็นเหตุผลหลัก)
+          จากนั้นสกัดประโยคที่มีคำสำคัญหนาแน่นที่สุดออกมาเป็นหลักฐานอ้างอิง
+          พร้อมตรวจการปฏิเสธ (“ไม่มีปัญหาเรื่องเงิน” จะไม่ถูกนับเป็นปัญหาค่าตอบแทน)
+        </p>
+      </div>
+
+      <div class="res-block">
+        <h3>ทำอะไรได้ดี</h3>
+        <ul class="actions-list">
+          <li><span class="chip chip-ok">✓</span><span>จัดหมวดเหตุผลการลาออกและจัดอันดับความสำคัญได้เร็วมาก</span></li>
+          <li><span class="chip chip-ok">✓</span><span>ยกประโยคอ้างอิงจากต้นฉบับให้ ไม่แต่งเติมข้อความขึ้นมาเอง</span></li>
+          <li><span class="chip chip-ok">✓</span><span>สแกนหาคำที่บ่งชี้ความเสี่ยง เช่น การคุกคาม ความไม่ปลอดภัย ปัญหาค่าจ้าง ได้ครบทุกไฟล์โดยไม่พลาด</span></li>
+          <li><span class="chip chip-ok">✓</span><span>รวมภาพหลายร้อยคนแล้วชี้ว่าแผนกไหนมีปัญหากระจุกตัว</span></li>
+        </ul>
+      </div>
+
+      <div class="res-block">
+        <h3>ทำอะไรไม่ได้ — ต้องระวัง</h3>
+        <ul class="actions-list">
+          <li><span class="chip chip-danger">✗</span><span><b>ไม่เข้าใจบริบท</b> — ถ้าพนักงานบอกว่าลาออกเพราะเงิน แต่เนื้อหาจริงชี้ไปที่หัวหน้างาน ระบบจะจับไม่ได้</span></li>
+          <li><span class="chip chip-danger">✗</span><span><b>ไม่เข้าใจการประชด</b> เช่น “หัวหน้าดีมากครับ ดีจนไม่เคยตอบอะไรเลย” จะถูกนับเป็นบวก</span></li>
+          <li><span class="chip chip-danger">✗</span><span><b>รู้จักเฉพาะคำที่อยู่ในพจนานุกรม</b> — ถ้าใช้คำที่ระบบไม่รู้จัก จะไม่ถูกจับเลย ต้องไปเพิ่มเองในแท็บ “คำสำคัญ”</span></li>
+          <li><span class="chip chip-danger">✗</span><span><b>สรุปย่อเป็นการเรียบเรียงจากแม่แบบ</b> ไม่ใช่การเขียนใหม่แบบเข้าใจเนื้อหา</span></li>
+        </ul>
+      </div>
+
+      <div class="res-block">
+        <h3>ควรใช้ยังไง</h3>
+        <p class="res-summary">
+          ใช้เป็น <b>ตัวช่วยร่างรายงานและคัดกรองเบื้องต้น</b> — ให้ระบบจัดหมวดและชี้จุดที่ต้องดูก่อน
+          แล้ว HR อ่านต้นฉบับยืนยันทุกครั้งก่อนนำไปใช้ตัดสินใจ
+          โดยเฉพาะธงเฝ้าระวังเรื่องการคุกคามหรือความปลอดภัย ต้องสอบข้อเท็จจริงกับคนจริงเสมอ
+          ห้ามใช้ผลจากระบบนี้ตัดสินเรื่องบุคคลโดยลำพัง
+        </p>
+      </div>
+
+      <div class="res-block">
+        <h3>ความเป็นส่วนตัว</h3>
+        <p class="res-summary">
+          หน้านี้ไม่มีการเรียกเซิร์ฟเวอร์ใด ๆ ทั้งสิ้น ข้อความบทสัมภาษณ์ถูกประมวลผลในเบราว์เซอร์
+          และเก็บไว้ใน localStorage ของเครื่องนี้เท่านั้น (เฉพาะเมื่อคุณติ๊ก “บันทึกลงประวัติ”)
+          ถ้าใช้เครื่องร่วมกับคนอื่น ให้กด <b>ล้างทั้งหมด</b> ในแท็บประวัติเมื่อใช้เสร็จ
+          ทดสอบได้โดยตัดเน็ตแล้วเปิดหน้านี้ — ยังใช้งานได้ตามปกติ
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="./assets/config.js"></script>
+<script src="./assets/cloud.js"></script>
+<script src="./assets/engine.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>

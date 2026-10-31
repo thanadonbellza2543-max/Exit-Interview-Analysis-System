@@ -1312,6 +1312,213 @@
   };
 
   /* ------------------------------------------------------------------ */
+  /* แดชบอร์ดผู้บริหาร                                                   */
+  /* ------------------------------------------------------------------ */
+
+  const execState = { months: 6 };
+
+  const thMonth = (d) => d.toLocaleDateString("th-TH", { month: "short" });
+  const thFull = (d) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
+
+  /** ป้ายเทียบกับช่วงก่อนหน้า — การลาออกเพิ่มขึ้น = แย่ลง สีจึงกลับด้านกับกราฟทั่วไป */
+  function deltaPill(cur, prev, hasPrev) {
+    if (!hasPrev) return '<span class="delta delta-same">ยังไม่มีช่วงก่อนให้เทียบ</span>';
+    const d = cur - prev;
+    if (d === 0) return '<span class="delta delta-same">เท่าช่วงก่อน</span>';
+    const cls = d > 0 ? "delta-worse" : "delta-better";
+    return `<span class="delta ${cls}">${d > 0 ? "▲" : "▼"} ${Math.abs(d)} เทียบช่วงก่อน</span>`;
+  }
+
+  /** กราฟแท่งรายเดือน วาดเองด้วย SVG ไม่ต้องพึ่งไลบรารีกราฟ
+      ความกว้างของ viewBox ถูกตรึงไว้ราว 950 เสมอโดยปรับระยะห่างแท่งตามจำนวนเดือน
+      ถ้าปล่อยให้กว้างตามจำนวนแท่ง พอมีไม่กี่เดือน SVG จะถูกยืดจนกราฟสูงเกินครึ่งจอ */
+  function trendSVG(monthly) {
+    const n = monthly.length;
+    if (!n) return "";
+
+    const padL = 38, padR = 14, padT = 22, padB = 38, H = 196;
+    const slot = Math.max(36, Math.min(120, 900 / n));
+    const bw = Math.min(46, slot * 0.52);
+    const W = padL + slot * n + padR;
+    const plotH = H - padT - padB;
+    const max = Math.max(1, ...monthly.map((m) => m.total));
+    const y = (v) => padT + plotH - (v / max) * plotH;
+
+    const ticks = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
+    const grid = ticks.map((v) => `
+      <line x1="${padL - 6}" y1="${y(v)}" x2="${W - padR}" y2="${y(v)}"
+            stroke="var(--border)" stroke-width="1"/>
+      <text x="${padL - 11}" y="${y(v) + 4}" text-anchor="end"
+            font-family="var(--mono)" font-size="11" fill="var(--text-3)">${v}</text>`).join("");
+
+    const bars = monthly.map((m, i) => {
+      const x = padL + slot * i + (slot - bw) / 2;
+      const yRisk = y(m.risk), yTop = y(m.total);
+      const cx = x + bw / 2;
+      const showYear = i === 0 || m.date.getMonth() === 0;
+      return `
+        ${m.risk ? `<rect x="${x}" y="${yRisk}" width="${bw}" height="${padT + plotH - yRisk}"
+              fill="var(--sev-high)" rx="3"/>` : ""}
+        ${m.total - m.risk > 0 ? `<rect x="${x}" y="${yTop}" width="${bw}" height="${yRisk - yTop}"
+              fill="var(--brand)" opacity=".42" rx="3"/>` : ""}
+        ${m.total ? `<text x="${cx}" y="${yTop - 7}" text-anchor="middle"
+              font-family="var(--mono)" font-size="11.5" font-weight="500"
+              fill="var(--text-2)">${m.total}</text>` : ""}
+        <text x="${cx}" y="${H - 19}" text-anchor="middle"
+              font-family="var(--sans)" font-size="11" fill="var(--text-3)">${esc(thMonth(m.date))}</text>
+        ${showYear ? `<text x="${cx}" y="${H - 5}" text-anchor="middle"
+              font-family="var(--mono)" font-size="10" fill="var(--text-3)">${m.date.getFullYear() + 543}</text>` : ""}`;
+    }).join("");
+
+    return `<div class="trend-scroll"><svg viewBox="0 0 ${Math.round(W)} ${H}"
+        role="img" aria-label="จำนวนการลาออกรายเดือน">${grid}${bars}</svg></div>`;
+  }
+
+  function renderExec() {
+    const box = $("#execBody");
+    if (!history.length) {
+      box.innerHTML = `<div class="empty"><span class="empty-icon">📈</span>
+        <p>ยังไม่มีข้อมูลให้สรุป</p>
+        <small>วิเคราะห์บทสัมภาษณ์แล้วติ๊ก “บันทึกลงประวัติ” ข้อมูลจะมาแสดงที่นี่</small></div>`;
+      $("#execPeriodNote").textContent = "";
+      return;
+    }
+
+    const x = E.executive(history, execState.months);
+    const k = x.kpi;
+
+    $("#execPeriodNote").textContent = x.from
+      ? `${thFull(x.from)} – ${thFull(x.to)}`
+      : `ข้อมูลทั้งหมด ${history.length} รายการ`;
+
+    if (!k.total) {
+      box.innerHTML = `<div class="empty"><span class="empty-icon">📅</span>
+        <p>ไม่มีการลาออกในช่วงเวลานี้</p>
+        <small>ลองเลือกช่วงที่กว้างขึ้น</small></div>`;
+      return;
+    }
+
+    const maxTheme = x.themes.length ? x.themes[0].count : 1;
+
+    box.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">พนักงานลาออก</div>
+          <div class="kpi-row"><span class="kpi-num">${k.total}</span><span class="kpi-unit">คน</span></div>
+          <div class="kpi-row">${deltaPill(k.total, k.totalPrev, x.hasPrev)}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">องค์กรน่าจะรั้งไว้ได้</div>
+          <div class="kpi-row"><span class="kpi-num">${k.preventablePct}</span><span class="kpi-unit">%</span></div>
+          <div class="kpi-note">${k.preventable} คน — ปัญหาอยู่ในวิสัยที่แก้ได้</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">ประเด็นต้องสอบข้อเท็จจริง</div>
+          <div class="kpi-row"><span class="kpi-num">${k.urgent}</span><span class="kpi-unit">เรื่อง</span></div>
+          <div class="kpi-row">${deltaPill(k.urgent, k.urgentPrev, x.hasPrev)}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">หน่วยงานที่มีคนลาออก</div>
+          <div class="kpi-row"><span class="kpi-num">${k.departments}</span><span class="kpi-unit">หน่วย</span></div>
+          <div class="kpi-note">น้ำเสียงลบหรือผสม ${k.negativePct}% ของผู้ให้สัมภาษณ์</div>
+        </div>
+      </div>
+
+      <div class="res-block">
+        <h3>แนวโน้มรายเดือน</h3>
+        <div class="trend">
+          ${trendSVG(x.monthly)}
+          <div class="legend">
+            <span><i style="background:var(--sev-high)"></i>มีประเด็นต้องสอบข้อเท็จจริง</span>
+            <span><i style="background:var(--brand);opacity:.45"></i>ลาออกตามปกติ</span>
+          </div>
+        </div>
+      </div>
+
+      ${x.themes.length ? `
+      <div class="res-block">
+        <h3>ปัจจัยหลัก ${x.hasPrev ? "<em class=\"warn-note\" style=\"color:var(--text-3)\">ตัวเลขขวาสุดคือส่วนต่างจากช่วงก่อนหน้า</em>" : ""}</h3>
+        <div>
+          ${x.themes.map((t) => `
+            <div class="theme-row">
+              <span class="theme-name">${esc(t.label)}
+                <em>${t.controllable ? "องค์กรแก้ไขได้" : "อยู่นอกการควบคุมขององค์กร"}</em>
+              </span>
+              <span class="bar-track"><span class="bar-fill" style="width:${(t.count / maxTheme) * 100}%"></span></span>
+              <span class="theme-count">${t.count} คน · ${t.share}%</span>
+              ${x.hasPrev ? deltaPill(t.count, t.prev, true) : ""}
+            </div>`).join("")}
+        </div>
+      </div>` : ""}
+
+      ${x.departments.length ? `
+      <div class="res-block">
+        <h3>หน่วยงานเรียงตามความเสี่ยง</h3>
+        <div class="table-scroll">
+          <table class="dept-table">
+            <thead><tr>
+              <th>หน่วยงาน</th><th>ประเด็นเด่น</th>
+              <th class="num">ลาออก</th><th class="num">น้ำเสียงลบ</th><th class="num">ต้องสอบ</th>
+            </tr></thead>
+            <tbody>
+              ${x.departments.map((d) => `
+                <tr>
+                  <td><b>${esc(d.name)}</b></td>
+                  <td>${esc(d.topCategory || "—")}</td>
+                  <td class="num">${d.count}</td>
+                  <td class="num">${d.negative || "—"}</td>
+                  <td class="num ${d.risks ? "has-risk" : ""}">${d.risks || "—"}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>` : ""}
+
+      ${x.decisions.length ? `
+      <div class="res-block">
+        <h3>เรื่องที่ต้องตัดสินใจ</h3>
+        ${x.decisions.map((d) => `
+          <div class="decision ${d.priority === "high" ? "decision-high" : ""}">
+            <span class="decision-owner">${esc(OWNERS[d.owner] || d.owner)}</span>
+            <span>
+              <span class="decision-text">${esc(d.action)}</span>
+              <span class="decision-why">${esc(d.because)}</span>
+            </span>
+          </div>`).join("")}
+      </div>` : ""}
+
+      ${x.urgent.length ? `
+      <div class="res-block">
+        <h3>ประเด็นที่ต้องสอบข้อเท็จจริง <em class="warn-note">ระบบตรวจจากคำสำคัญ ยังไม่ใช่ข้อสรุป</em></h3>
+        ${x.urgent.slice(0, 8).map((u) => `
+          <div class="flag">
+            <span>⚑</span>
+            <span><b>${esc(u.label)} · ${esc(u.who)}${u.department ? " · " + esc(u.department) : ""}</b>${esc(u.detail)}</span>
+          </div>`).join("")}
+        ${x.urgent.length > 8 ? `<p class="muted">และอีก ${x.urgent.length - 8} เรื่อง — ดูทั้งหมดได้ในแท็บประวัติ</p>` : ""}
+      </div>` : ""}
+
+      <p class="muted">สรุปจาก ${k.total} บทสัมภาษณ์ที่บันทึกไว้ในระบบ ·
+      ผลมาจากการจับคำสำคัญอัตโนมัติ ควรอ่านต้นฉบับยืนยันก่อนใช้ตัดสินใจเรื่องบุคคล</p>
+    `;
+  }
+
+  $("#execPeriod").addEventListener("click", (e) => {
+    const btn = e.target.closest(".fchip");
+    if (!btn) return;
+    execState.months = Number(btn.dataset.m);
+    $$("#execPeriod .fchip").forEach((b) => b.classList.toggle("is-on", b === btn));
+    renderExec();
+  });
+
+  $("#execCsv").onclick = () => {
+    if (!history.length) return toast("ยังไม่มีข้อมูลให้ส่งออก");
+    const rows = E.executive(history, execState.months).current;
+    if (!rows.length) return toast("ไม่มีข้อมูลในช่วงเวลานี้");
+    download(`exit-interview-exec-${stamp()}.csv`, resultsToCsv(rows), "text/csv");
+  };
+
+  /* ------------------------------------------------------------------ */
   /* แท็บ                                                                */
   /* ------------------------------------------------------------------ */
 
@@ -1319,6 +1526,7 @@
     tab.addEventListener("click", () => {
       $$(".tab").forEach((t) => t.classList.toggle("is-active", t === tab));
       $$("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+      if (tab.dataset.tab === "exec") renderExec();
     });
   });
 

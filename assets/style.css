@@ -814,3 +814,75 @@ input.date-input { width: auto; min-width: 148px; flex: 0 1 auto; }
   font-size: 11.5px; line-height: 1.7; color: var(--text-3);
   text-align: center; margin-top: 2px;
 }
+
+/* ============================================================
+   แดชบอร์ดผู้บริหาร
+   ============================================================ */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.kpi {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 16px 17px;
+}
+.kpi-label { font-size: 12px; color: var(--text-2); }
+.kpi-row { display: flex; align-items: baseline; gap: 9px; margin-top: 6px; flex-wrap: wrap; }
+.kpi-num {
+  font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-unit { font-size: 13px; color: var(--text-3); }
+.kpi-note { font-size: 11.5px; color: var(--text-3); margin-top: 7px; line-height: 1.5; }
+
+/* ลูกศรเทียบช่วงก่อนหน้า — การลาออกเพิ่มขึ้นคือข่าวร้าย สีจึงกลับด้านกับกราฟทั่วไป */
+.delta {
+  font-size: 11.5px; font-weight: 650; padding: 2px 8px; border-radius: 99px;
+  white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.delta-worse { background: var(--danger-soft); color: var(--danger); }
+.delta-better { background: var(--ok-soft); color: var(--ok); }
+.delta-same { background: var(--surface-3); color: var(--text-3); }
+
+/* ---- กราฟแนวโน้มรายเดือน ---- */
+.trend { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 16px; }
+.trend svg { display: block; width: 100%; height: auto; max-height: 260px; }
+.trend-scroll { min-width: 0; }
+.trend-scroll { overflow-x: auto; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-2); }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
+
+/* ---- ปัจจัยหลักพร้อมแนวโน้ม ---- */
+.theme-row {
+  display: grid; grid-template-columns: minmax(130px, 1.3fr) minmax(90px, 2fr) auto auto;
+  gap: 13px; align-items: center; font-size: 13.5px;
+  padding: 11px 0; border-bottom: 1px solid var(--border);
+}
+.theme-row:last-child { border-bottom: none; }
+.theme-name { font-weight: 550; }
+.theme-name em { display: block; font-style: normal; font-size: 11px; color: var(--text-3); font-weight: 400; }
+.theme-count { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); white-space: nowrap; text-align: right; }
+@media (max-width: 640px) {
+  .theme-row { grid-template-columns: 1fr auto; row-gap: 7px; }
+  .theme-row .bar-track { grid-column: 1 / -1; }
+}
+
+/* ---- เรื่องที่ต้องตัดสินใจ ---- */
+.decision {
+  display: grid; grid-template-columns: auto 1fr; gap: 13px; align-items: start;
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface-2); margin-bottom: 9px;
+}
+.decision-owner {
+  font-size: 11.5px; font-weight: 650; white-space: nowrap; padding: 3px 10px; border-radius: 99px;
+  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-2);
+}
+.decision-high { border-color: var(--danger-line); background: var(--danger-soft); }
+.decision-high .decision-owner { color: var(--danger); border-color: var(--danger-line); background: var(--surface); }
+.decision-text { font-size: 14px; line-height: 1.75; }
+.decision-why { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+
+@media print {
+  #execPeriod, #execBody .trend-scroll { break-inside: avoid; }
+  .kpi, .decision, .theme-row, .trend { break-inside: avoid; }
+}

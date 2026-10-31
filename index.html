@@ -62,6 +62,7 @@
   <button class="tab is-active" data-tab="single" role="tab">วิเคราะห์รายคน</button>
   <button class="tab" data-tab="batch" role="tab">ทั้งไฟล์<span class="tab-count" id="tabCountBatch" hidden></span></button>
   <button class="tab" data-tab="history" role="tab">ประวัติ<span class="tab-count" id="tabCountHistory" hidden></span></button>
+  <button class="tab" data-tab="exec" role="tab">ผู้บริหาร</button>
   <span class="tabs-gap"></span>
   <button class="tab tab-minor" data-tab="lexicon" role="tab">คำสำคัญ</button>
   <button class="tab tab-minor" data-tab="about" role="tab">วิธีอ่านผล</button>
@@ -271,6 +272,28 @@
       <div id="historyList" class="history-list"></div>
     </div>
   </section>
+
+  <!-- ---------------- ผู้บริหาร ---------------- -->
+    <section class="panel" data-panel="exec" hidden>
+      <div class="card">
+        <div class="card-head">
+          <h2>ภาพรวมสำหรับผู้บริหาร <span class="count-note" id="execPeriodNote"></span></h2>
+          <div class="card-head-actions">
+            <button class="btn btn-ghost btn-sm" id="execCsv">ดาวน์โหลด CSV</button>
+            <button class="btn btn-ghost btn-sm" onclick="window.print()">พิมพ์รายงาน</button>
+          </div>
+        </div>
+
+        <div class="filter-chips" id="execPeriod">
+          <button class="fchip" data-m="3" type="button">3 เดือนล่าสุด</button>
+          <button class="fchip is-on" data-m="6" type="button">6 เดือนล่าสุด</button>
+          <button class="fchip" data-m="12" type="button">12 เดือนล่าสุด</button>
+          <button class="fchip" data-m="0" type="button">ทั้งหมด</button>
+        </div>
+
+        <div id="execBody"></div>
+      </div>
+    </section>
 
   <!-- ---------------- คำสำคัญ ---------------- -->
   <section class="panel" data-panel="lexicon" hidden>

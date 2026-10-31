@@ -691,6 +691,132 @@
   }
 
   /* ------------------------------------------------------------------ */
+  /* 8. มุมมองผู้บริหาร — เพิ่มมิติเวลาเข้าไปในภาพรวม                      */
+  /* ------------------------------------------------------------------ */
 
-  global.ExitEngine = { analyze, aggregate, CATEGORIES, RISKS, splitSentences, parseTenureYears };
+  /**
+   * สรุปสำหรับผู้บริหาร ต่างจาก aggregate() ตรงที่ตอบคำถาม "แนวโน้มเป็นยังไง"
+   * ไม่ใช่แค่ "ตอนนี้เป็นยังไง" จึงต้องเทียบกับช่วงเวลาก่อนหน้าที่ยาวเท่ากัน
+   *
+   * @param {Array}  records     รายการผลวิเคราะห์ทั้งหมด
+   * @param {number} monthsBack  ย้อนหลังกี่เดือน (0 = ทั้งหมดเท่าที่มี)
+   */
+  function executive(records, monthsBack) {
+    const now = new Date();
+    const monthStart = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+    const shift = (d, n) => new Date(d.getFullYear(), d.getMonth() + n, 1);
+    const when = (r) => new Date(r.at || Date.now());
+
+    const thisMonth = monthStart(now);
+    const from = monthsBack ? shift(thisMonth, -(monthsBack - 1)) : null;
+    const prevFrom = monthsBack ? shift(thisMonth, -(monthsBack * 2 - 1)) : null;
+
+    const current = from ? records.filter((r) => when(r) >= from) : records.slice();
+    const previous = from ? records.filter((r) => when(r) >= prevFrom && when(r) < from) : [];
+
+    const highRisks = (r) => (r.summary.risk_flags || []).filter((f) => f.urgency === "high");
+    const isNegative = (r) => ["negative", "mixed"].indexOf(r.summary.sentiment.overall) !== -1;
+    const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+
+    /* ---- ตัวเลขหลัก พร้อมส่วนต่างจากช่วงก่อนหน้า ---- */
+    const kpi = {
+      total: current.length,
+      totalPrev: previous.length,
+      preventable: current.filter((r) => r.summary.preventable === "yes").length,
+      negative: current.filter(isNegative).length,
+      urgent: current.reduce((n, r) => n + highRisks(r).length, 0),
+      urgentPrev: previous.reduce((n, r) => n + highRisks(r).length, 0),
+      departments: new Set(current.map((r) => String(r.meta.department || "").trim()).filter(Boolean)).size,
+    };
+    kpi.preventablePct = pct(kpi.preventable, kpi.total);
+    kpi.negativePct = pct(kpi.negative, kpi.total);
+
+    /* ---- แนวโน้มรายเดือน ---- */
+    const oldest = records.length
+      ? monthStart(new Date(Math.min.apply(null, records.map((r) => when(r).getTime()))))
+      : thisMonth;
+    let cursor = from || oldest;
+    if ((thisMonth - cursor) / 2.6e9 > 23) cursor = shift(thisMonth, -23);   // เพดาน 24 แท่ง
+
+    const monthly = [];
+    const index = {};
+    while (cursor <= thisMonth) {
+      const key = cursor.getFullYear() + "-" + String(cursor.getMonth() + 1).padStart(2, "0");
+      const bucket = { key, date: new Date(cursor), total: 0, risk: 0 };
+      index[key] = bucket;
+      monthly.push(bucket);
+      cursor = shift(cursor, 1);
+    }
+    current.forEach((r) => {
+      const d = when(r);
+      const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      const b = index[key];
+      if (!b) return;
+      b.total++;
+      if (highRisks(r).length) b.risk++;
+    });
+
+    /* ---- ปัจจัยหลัก เทียบกับช่วงก่อนหน้า ---- */
+    const countCats = (list) => {
+      const out = {};
+      list.forEach((r) => (r.summary.reason_categories || []).slice(0, 3).forEach((c) => {
+        out[c.category] = (out[c.category] || 0) + 1;
+      }));
+      return out;
+    };
+    const curCats = countCats(current);
+    const prevCats = countCats(previous);
+
+    const themes = Object.keys(curCats)
+      .sort((a, b) => curCats[b] - curCats[a])
+      .slice(0, 5)
+      .map((k) => ({
+        category: k,
+        label: CATEGORIES[k] ? CATEGORIES[k].label : k,
+        count: curCats[k],
+        share: pct(curCats[k], current.length),
+        prev: prevCats[k] || 0,
+        delta: curCats[k] - (prevCats[k] || 0),
+        controllable: CONTROLLABLE.indexOf(k) !== -1,
+      }));
+
+    /* ---- หน่วยงาน เรียงตามความเสี่ยง ---- */
+    const base = aggregate(current.length ? current : records);
+    const departments = (base.departments || []).slice(0, 8);
+
+    /* ---- ประเด็นที่ต้องสอบข้อเท็จจริง ---- */
+    const urgent = [];
+    current.forEach((r) => highRisks(r).forEach((f) => urgent.push({
+      label: f.label,
+      detail: f.detail,
+      who: r.meta.employee_name || r.meta.employee_code || "ไม่ระบุชื่อ",
+      department: r.meta.department || null,
+      at: r.at,
+    })));
+    urgent.sort((a, b) => String(b.at).localeCompare(String(a.at)));
+
+    /* ---- เรื่องที่ต้องตัดสินใจ ---- */
+    const decisions = themes
+      .filter((t) => t.controllable && CATEGORIES[t.category] && CATEGORIES[t.category].action)
+      .slice(0, 4)
+      .map((t) => ({
+        owner: CATEGORIES[t.category].action.owner,
+        action: CATEGORIES[t.category].action.text,
+        because: `พบใน ${t.count} จาก ${current.length} คน (${t.share}%)`,
+        priority: t.share >= 50 ? "high" : "medium",
+      }));
+
+    return {
+      monthsBack: monthsBack || 0,
+      from, to: now,
+      hasPrev: previous.length > 0,
+      current, previous,
+      kpi, monthly, themes, departments, urgent, decisions,
+      overview: base.overview,
+    };
+  }
+
+  /* ------------------------------------------------------------------ */
+
+  global.ExitEngine = { analyze, aggregate, executive, CATEGORIES, RISKS, splitSentences, parseTenureYears };
 })(window);

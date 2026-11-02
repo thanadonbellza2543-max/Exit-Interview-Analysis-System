@@ -122,22 +122,31 @@
   const getLexicon = () => lexicon;
 
   function renderLexicon() {
-    $("#lexiconList").innerHTML = Object.keys(E.CATEGORIES)
-      .filter((k) => k !== "other")
-      .map((k) => {
-        const def = E.CATEGORIES[k];
-        return `
-          <div class="lex-row">
-            <div class="lex-head">
-              <b>${esc(def.label)}</b>
-              <span class="count-note">คำมาตรฐาน ${def.kw.length} คำ</span>
-            </div>
-            <details class="lex-default"><summary>ดูคำมาตรฐาน</summary><p>${esc(def.kw.join(", "))}</p></details>
-            <input type="text" data-cat="${esc(k)}" class="lex-input"
-                   placeholder="เพิ่มคำที่ใช้ในศูนย์นี้ คั่นด้วย , เช่น ช่องซ่อม 3, เคาน์เตอร์อะไหล่"
-                   value="${esc((lexicon[k] || []).join(", "))}">
-          </div>`;
-      }).join("");
+    const keys = Object.keys(E.CATEGORIES).filter((k) => k !== "other");
+    const done = keys.filter((k) => (lexicon[k] || []).length).length;
+
+    /* สรุปด้านบนบอกทันทีว่าเหลืออีกกี่หมวด ไม่ต้องไล่อ่านทีละใบ */
+    const summary = `<p class="lex-summary">
+      <b>${done}</b> จาก <b>${keys.length}</b> หมวดมีคำของศูนย์นี้เพิ่มไว้แล้ว
+      ${done ? "" : "— ยังไม่ได้เพิ่มเลย ระบบจะใช้คำมาตรฐานอย่างเดียว"}
+    </p>`;
+
+    $("#lexiconList").innerHTML = summary + `<div class="lex-grid">` + keys.map((k) => {
+      const def = E.CATEGORIES[k];
+      const mine = lexicon[k] || [];
+      return `
+        <div class="lex-row ${mine.length ? "has-custom" : ""}">
+          <div class="lex-head">
+            <b>${esc(def.label)}</b>
+            <span class="count-note">มาตรฐาน ${def.kw.length} คำ${mine.length ? ` · เพิ่มเอง ${mine.length}` : ""}</span>
+          </div>
+          <details class="lex-default"><summary>ดูคำมาตรฐาน</summary><p>${esc(def.kw.join(", "))}</p></details>
+          <input type="text" data-cat="${esc(k)}" class="lex-input"
+                 aria-label="เพิ่มคำสำคัญในหมวด ${esc(def.label)}"
+                 placeholder="เพิ่มคำของศูนย์นี้ คั่นด้วย ,"
+                 value="${esc(mine.join(", "))}">
+        </div>`;
+    }).join("") + `</div>`;
 
     $$(".lex-input").forEach((input) => {
       input.addEventListener("change", () => {
@@ -145,6 +154,9 @@
         const words = input.value.split(",").map((w) => w.trim().toLowerCase()).filter(Boolean);
         if (words.length) lexicon[cat] = words; else delete lexicon[cat];
         writeLS(LS_LEXICON, lexicon);
+        renderLexicon();          // ให้ป้ายคำ ตัวนับ และกรอบไฮไลต์อัปเดตทันที
+        const back = $(`.lex-input[data-cat="${cat}"]`);
+        if (back) back.focus();   // วาดใหม่แล้วโฟกัสหาย ต้องคืนให้ช่องเดิม
         toast("บันทึกคำสำคัญแล้ว");
       });
     });

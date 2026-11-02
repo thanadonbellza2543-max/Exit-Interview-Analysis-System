@@ -208,8 +208,8 @@ code { font-family: var(--mono); font-size: .9em; background: var(--sunk); paddi
 .ph-acts { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
 .lbl {
-  font: 600 13px/1 var(--sans); letter-spacing: .02em;
-  color: var(--ink-3);
+  font: 700 18px/1.4 var(--sans); letter-spacing: -.01em;
+  color: var(--ink);
   margin-bottom: var(--s3);
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3);
 }
@@ -418,10 +418,10 @@ input:focus, select:focus, textarea:focus { outline: none; box-shadow: inset 0 0
 .alert-foot { margin-top: var(--s3); font-size: 13.5px; color: var(--ink-2); line-height: 1.75; }
 
 /* ---------- บล็อกย่อย ---------- */
-.res-block { margin-bottom: var(--s5); }
+.res-block { margin-bottom: var(--s7); }
 .res-block > h3 {
-  font: 600 13px var(--sans); letter-spacing: .02em;
-  color: var(--ink-3); margin-bottom: var(--s3);
+  font: 700 18px/1.4 var(--sans); letter-spacing: -.01em;
+  color: var(--ink); margin-bottom: var(--s3);
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3);
 }
 .warn-note { font-style: normal; font: 500 13.5px var(--sans); color: var(--mid); letter-spacing: 0; }
@@ -720,9 +720,19 @@ input.date-input { width: auto; min-width: 158px; font-family: var(--mono); font
 .danger-zone b { font-size: 15.5px; }
 .danger-zone p { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; max-width: 64ch; }
 
-.lex-row { background: var(--card); border-radius: var(--r3); box-shadow: var(--sh1); padding: var(--s4) var(--s5); margin-bottom: var(--s2); }
-.lex-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s2); flex-wrap: wrap; }
-.lex-head b { font-size: 17px; font-weight: 700; }
+/* สองคอลัมน์บนจอกว้าง ลดความสูงของหน้าลงครึ่งหนึ่ง */
+.lex-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: var(--s3); align-items: start; }
+.lex-row { background: var(--card); border-radius: var(--r3); box-shadow: var(--sh1); padding: var(--s4); }
+/* หมวดที่เพิ่มคำเองแล้วต้องแตกต่างจากหมวดที่ยังว่าง ไม่งั้นการ์ด 13 ใบหน้าตาเหมือนกันหมด */
+.lex-row.has-custom { box-shadow: var(--sh1), inset 0 0 0 1.5px var(--brand); }
+.lex-head { display: flex; align-items: baseline; gap: var(--s2); margin-bottom: var(--s2); flex-wrap: wrap; }
+.lex-head b { font-size: 16.5px; font-weight: 700; }
+.lex-head .count-note { margin-left: auto; }
+.lex-summary {
+  display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap;
+  margin-bottom: var(--s4); font-size: 15px; color: var(--ink-2);
+}
+.lex-summary b { color: var(--ink); }
 .lex-default { margin-bottom: var(--s2); }
 .lex-default summary { cursor: pointer; font: 400 13.5px var(--sans); color: var(--ink-2); }
 .lex-default summary:hover { color: var(--ink); }
@@ -753,7 +763,7 @@ input.date-input { width: auto; min-width: 158px; font-family: var(--mono); font
    หน้าเอกสารอธิบาย
    ============================================================ */
 .doc { max-width: 74ch; background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); padding: var(--s6); }
-.doc h2 { font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-3); margin: var(--s6) 0 var(--s3); }
+.doc h2 { font: 700 19px/1.4 var(--sans); letter-spacing: -.01em; color: var(--ink); margin: var(--s7) 0 var(--s3); }
 .doc h2:first-child { margin-top: 0; }
 .doc p { font-size: 16px; line-height: 2.05; max-width: 68ch; }
 .doc ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; }

@@ -1,745 +1,827 @@
 /* ============================================================================
-   ระบบวิเคราะห์ Exit Interview — stylesheet
+   ระบบสรุป Exit Interview — การ์ดมุมมน (Bento Box Grid)
 
-   หลักการออกแบบ
-   1. สีแดงแบรนด์ใช้เฉพาะจุดนำสายตา (โลโก้ แท็บที่เลือก ปุ่มหลัก เส้นข้างเหตุผลหลัก)
-      ส่วนระดับความรุนแรงใช้ชุดสีของตัวเอง เทา → ส้ม → แดง จะได้ไม่แย่งกันเอง
-   2. ภาษาไทยต้องการช่องไฟและความสูงบรรทัดมากกว่าอังกฤษ ตัวอักษรจึงใหญ่และโปร่งกว่าปกติ
-   3. ใช้เงาอ่อน ๆ แทนการตีเส้นทุกกล่อง หน้าจะสงบและอ่านง่ายขึ้น
+   การ์ดขาวลอยบนพื้นเทาอ่อน มุมมน เงานุ่ม ไม่มีเส้นกรอบแข็ง
+   สีแดงโตโยต้าเป็นสีเน้นสีเดียว ใช้บอกความหมาย ไม่ใช้ตกแต่ง
+   ตัวอักษร Sarabun ฐาน 16px ระยะบรรทัด 1.85 ไม่ถ่างตัวอักษรไทย
    ========================================================================== */
 
 :root {
-  /* ---- แบรนด์ ---- */
-  --brand: #d5001c;
-  --brand-hover: #b00017;
-  --brand-soft: #fff1f2;
-  --brand-ring: rgba(213, 0, 28, .16);
+  --page:       #F4F5F7;   /* พื้นหลังหน้า */
+  --card:       #FFFFFF;   /* พื้นการ์ด */
+  --sunk:       #F0F1F4;   /* ร่องในการ์ด */
+  --sunk-2:     #E6E8EC;
+  --line:       #E4E6EA;   /* เส้นคั่นบาง ใช้เท่าที่จำเป็น */
+  --line-mid:   #C9CDD4;
 
-  /* ---- พื้นและตัวอักษร ---- */
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --surface-2: #fafbfc;
-  --surface-3: #f1f3f6;
-  --border: #e7e9ee;
-  --border-strong: #d4d8e0;
-  --text: #15171c;
-  --text-2: #565e6b;
-  --text-3: #878f9c;
+  --ink:        #15171A;
+  --ink-2:      #4C5157;
+  --ink-3:      #64696F;
 
-  /* ---- สีความหมาย ---- */
-  --ok: #0a7d55;        --ok-soft: #e8f6f0;      --ok-line: #bfe4d5;
-  --warn: #a96809;      --warn-soft: #fdf4e7;    --warn-line: #f0dcb8;
-  --danger: #c4262b;    --danger-soft: #fdedec;  --danger-line: #f2c9c7;
-  --info: #1a6cb5;      --info-soft: #ebf3fb;    --info-line: #c5dcf2;
+  /* สีเน้นสีเดียวของทั้งระบบ */
+  --brand:      #D5001C;
+  --brand-deep: #A50016;
+  --brand-wash: #FDF0F1;
+  /* พื้นทึบที่รองรับตัวอักษรสีขาว ต้องเข้มเสมอ ไม่ตามโหมดมืด */
+  --brand-soli: #D5001C;
+  --brand-soli-hi: #A50016;
 
-  /* ---- ระดับความรุนแรง ---- */
-  --sev-low: #a8afba;
-  --sev-mid: #e09b2d;
-  --sev-high: #d1434a;
+  /* สีสถานะ ใช้เฉพาะเมื่อมีความหมาย */
+  --crit:       #D5001C;
+  --mid:        #8A5A0B;
+  --mid-soli:   #8A5A0B;
+  --mid-wash:   #FBF4E6;
+  --ok:         #15663A;
+  --ok-wash:    #EDF5F0;
 
-  /* ---- รูปทรง ---- */
-  --r-xs: 6px;
-  --r-sm: 9px;
-  --r: 14px;
+  --sans: "Sarabun", "Noto Sans Thai", system-ui, sans-serif;
+  --mono: "Fira Code", "Sarabun", ui-monospace, monospace;
 
-  --sh-1: 0 1px 2px rgba(18, 21, 26, .05);
-  --sh-2: 0 1px 3px rgba(18, 21, 26, .05), 0 10px 26px -12px rgba(18, 21, 26, .16);
-  --sh-3: 0 2px 6px rgba(18, 21, 26, .07), 0 16px 32px -16px rgba(18, 21, 26, .22);
+  /* มุมมน: เล็ก→ใหญ่ ตามขนาดของสิ่งที่ห่อ */
+  --r1: 8px;     /* ป้าย ชิปเล็ก */
+  --r2: 12px;    /* ปุ่ม ช่องกรอก */
+  --r3: 18px;    /* การ์ด */
+  --r4: 26px;    /* แผงใหญ่ */
+  --rp: 999px;   /* เม็ดยา */
 
-  --font: "IBM Plex Sans Thai", "Noto Sans Thai", -apple-system, "Segoe UI", sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+  /* เงานุ่มสามระดับ ไม่มีเส้นขอบแข็งมาแข่ง */
+  --sh1: 0 1px 2px rgba(21, 23, 26, .04);
+  --sh2: 0 1px 2px rgba(21, 23, 26, .04), 0 4px 14px -6px rgba(21, 23, 26, .10);
+  --sh3: 0 2px 4px rgba(21, 23, 26, .05), 0 12px 28px -10px rgba(21, 23, 26, .16);
+
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 44px; --s8: 68px;
+
+  --rail: 212px;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --brand: #ff5c68;
-    --brand-hover: #ff7a84;
-    --brand-soft: #2b1418;
-    --brand-ring: rgba(255, 92, 104, .22);
+  :root:not([data-theme="light"]) {
+    --page:       #0D0E10;
+    --card:       #17191D;
+    --sunk:       #1F2228;
+    --sunk-2:     #272B31;
+    --line:       #2B2F35;
+    --line-mid:   #474C54;
 
-    --bg: #0d1014;
-    --surface: #14181e;
-    --surface-2: #191e26;
-    --surface-3: #202631;
-    --border: #242a33;
-    --border-strong: #363e4a;
-    --text: #e9ecf1;
-    --text-2: #a6aebb;
-    --text-3: #757d8a;
+    --ink:        #F1F2F4;
+    --ink-2:      #B4B9BF;
+    --ink-3:      #8E949B;
 
-    --ok: #4ade80;      --ok-soft: #10261c;      --ok-line: #1e4634;
-    --warn: #f5b544;    --warn-soft: #271f11;    --warn-line: #4a3a1b;
-    --danger: #f87a7a;  --danger-soft: #2b1517;  --danger-line: #4d2528;
-    --info: #77c8f5;    --info-soft: #10222e;    --info-line: #1d3d51;
+    --brand:      #FF8B99;
+    --brand-deep: #FFAAB4;
+    --brand-wash: #2A1518;
+    --brand-soli: #B00018;
+    --brand-soli-hi: #D5001C;
 
-    --sev-low: #6b727e;
-    --sev-mid: #e0a94a;
-    --sev-high: #ef5f66;
+    --crit:       #FF8B99;
+    --mid:        #E3B05C;
+    --mid-soli:   #7A4F08;
+    --mid-wash:   #241D10;
+    --ok:         #6ACB90;
+    --ok-wash:    #10221A;
 
-    --sh-1: 0 1px 2px rgba(0, 0, 0, .4);
-    --sh-2: 0 1px 3px rgba(0, 0, 0, .45), 0 10px 26px -12px rgba(0, 0, 0, .6);
-    --sh-3: 0 2px 6px rgba(0, 0, 0, .5), 0 16px 32px -16px rgba(0, 0, 0, .7);
+    --sh1: 0 1px 2px rgba(0, 0, 0, .45);
+    --sh2: 0 1px 2px rgba(0, 0, 0, .45), 0 4px 14px -6px rgba(0, 0, 0, .7);
+    --sh3: 0 2px 4px rgba(0, 0, 0, .5), 0 12px 28px -10px rgba(0, 0, 0, .85);
   }
 }
 
 * { box-sizing: border-box; }
-
-/* กฎ display ของ class มี specificity เท่ากับ [hidden] ของเบราว์เซอร์ และมาทีหลัง
-   จึงทับกันเอง ทำให้ element ที่สั่ง hidden ไว้ยังแสดงอยู่ — ปิดตายไว้ตรงนี้ */
 [hidden] { display: none !important; }
 
+html { scrollbar-color: var(--line-mid) var(--page); }
 body {
   margin: 0;
-  font-family: var(--font);
-  font-size: 15.5px;
-  line-height: 1.7;
-  color: var(--text);
-  background: var(--bg);
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.85;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
 }
 
-h1, h2, h3 { margin: 0; line-height: 1.35; font-weight: 600; }
+h1, h2, h3 { margin: 0; line-height: 1.35; font-weight: 700; letter-spacing: -.01em; }
 p { margin: 0; }
 
-::selection { background: var(--brand-ring); }
+::selection { background: var(--brand-soli); color: #fff; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-mid); border: 3px solid var(--page); border-radius: var(--rp); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
 
 :where(a, button, input, select, textarea, summary):focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
-  border-radius: var(--r-xs);
+  border-radius: var(--r1);
 }
+
+code { font-family: var(--mono); font-size: .9em; background: var(--sunk); padding: 2px 7px; border-radius: var(--r1); }
+
+/* ---------- ไอคอน ---------- */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.sprite g { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.ic { width: 19px; height: 19px; flex: none; vertical-align: -4px; fill: none; stroke: currentColor; }
+.ic-sm { width: 15px; height: 15px; vertical-align: -3px; }
+.ic-lg { width: 25px; height: 25px; }
+.ic-xl { width: 34px; height: 34px; }
 
 /* ============================================================
-   แบรนด์
+   โครงหน้า
    ============================================================ */
-.brand { display: flex; align-items: center; gap: 13px; }
-.brand-mark {
-  width: 38px; height: 38px; flex: none; border-radius: 11px;
-  background: linear-gradient(150deg, #f0243d 0%, var(--brand) 55%, #9d0015 100%);
-  box-shadow: 0 2px 8px -2px rgba(213, 0, 28, .5);
-  position: relative;
+.shell {
+  display: grid; grid-template-columns: var(--rail) minmax(0, 1fr);
+  align-content: start; min-height: 100vh;
+  gap: var(--s4); padding: var(--s4);
 }
-.brand-mark::after {
-  content: ""; position: absolute; inset: 10px 9px;
-  border: 2px solid rgba(255, 255, 255, .95); border-radius: 3px;
-  border-top-width: 6px;
-}
-.brand h1 { font-size: 17px; letter-spacing: -.015em; font-weight: 650; }
-.brand p { font-size: 12px; color: var(--text-2); line-height: 1.5; margin-top: 1px; }
-.brand-sm .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
-.brand-sm .brand-mark::after { inset: 9px 8px; border-width: 1.8px; border-top-width: 5px; }
 
-/* ============================================================
-   หัวเว็บและแท็บ
-   ============================================================ */
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 13px 26px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 30;
+.rail {
+  background: var(--card);
+  border-radius: var(--r4);
+  box-shadow: var(--sh2);
+  display: flex; flex-direction: column;
+  padding: var(--s5) var(--s3) var(--s3);
+  position: sticky; top: var(--s4); height: calc(100vh - var(--s4) * 2);
 }
-.topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-.tabs {
-  display: flex; align-items: stretch; gap: 4px; padding: 0 26px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 61px; z-index: 29; overflow-x: auto;
-  scrollbar-width: none;
+.rail-mark {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: 0 var(--s3) var(--s5);
+  color: var(--brand);
 }
-.tabs::-webkit-scrollbar { display: none; }
-.tabs-gap { flex: 1; min-width: 12px; }
+.rail-mark::after {
+  content: "EXIT INTERVIEW";
+  font: 700 12px/1.2 var(--mono); letter-spacing: .07em;
+  color: var(--ink); white-space: nowrap;
+}
+.rail-nav { display: flex; flex-direction: column; gap: 2px; }
+.rail-gap { height: 1px; background: var(--line); margin: var(--s3); border-radius: var(--rp); }
 
 .tab {
-  appearance: none; background: none; border: none; cursor: pointer;
-  font: inherit; font-size: 14.5px; font-weight: 500; color: var(--text-2);
-  padding: 12px 14px 11px; white-space: nowrap;
-  position: relative; transition: color .15s;
+  appearance: none; border: 0; cursor: pointer; text-align: left;
+  font: 500 14.5px/1.4 var(--sans);
+  background: none; color: var(--ink-2);
+  display: grid; grid-template-columns: 19px 1fr auto; gap: var(--s3); align-items: center;
+  padding: 10px var(--s3);
+  border-radius: var(--r2);
+  transition: color .2s ease, background .2s ease;
 }
-.tab::after {
-  content: ""; position: absolute; left: 12px; right: 12px; bottom: -1px;
-  height: 2.5px; border-radius: 3px 3px 0 0;
-  background: transparent; transition: background .15s;
-}
-.tab:hover { color: var(--text); }
-.tab.is-active { color: var(--text); font-weight: 650; }
-.tab.is-active::after { background: var(--brand); }
-.tab-minor { color: var(--text-3); font-weight: 400; font-size: 13.5px; }
-
+.tab:hover { color: var(--ink); background: var(--sunk); }
+.tab.is-active { color: #fff; font-weight: 600; background: var(--brand-soli); }
+.tab.is-active:hover { background: var(--brand-soli-hi); }
+.tab-minor { font-size: 13.5px; color: var(--ink-3); }
 .tab-count {
-  display: inline-block; margin-left: 7px; padding: 1px 7px;
-  border-radius: 99px; font-size: 11px; font-weight: 600; line-height: 1.55;
-  background: var(--surface-3); color: var(--text-2);
-  vertical-align: 1px;
+  font: 600 12px/1 var(--mono); font-style: normal;
+  background: var(--brand-soli); color: #fff;
+  min-width: 22px; height: 20px;
+  display: grid; place-items: center; padding: 0 6px; border-radius: var(--rp);
 }
-.tab.is-active .tab-count { background: var(--brand); color: #fff; }
+.tab.is-active .tab-count { background: #fff; color: var(--brand-soli); }
 
-.wrap { max-width: 1240px; margin: 0 auto; padding: 26px; }
+.rail-foot {
+  margin-top: auto; display: grid; gap: var(--s2);
+  padding: var(--s3) var(--s3) 0; border-top: 1px solid var(--line);
+}
+.mode { display: inline-flex; align-items: center; gap: 5px; font: 500 13px var(--sans); color: var(--ink-2); line-height: 1.5; }
+.who { font: 400 12px var(--mono); color: var(--ink-3); word-break: break-all; line-height: 1.5; }
+.rail-out {
+  appearance: none; cursor: pointer; justify-self: start;
+  display: inline-flex; align-items: center; gap: 5px;
+  font: 500 13px var(--sans); color: var(--ink-2);
+  background: var(--sunk); border: 0; padding: 6px 13px; border-radius: var(--rp);
+  transition: background .2s ease, color .2s ease;
+}
+.rail-out:hover { background: var(--sunk-2); color: var(--ink); }
+
+.work { padding: var(--s5) var(--s6) var(--s8); max-width: 1680px; }
 
 /* ============================================================
-   โครงหน้าและการ์ด
+   หัวเรื่อง
    ============================================================ */
-.grid-2 {
-  display: grid; gap: 22px; align-items: start;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
+.ph {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--s5); flex-wrap: wrap; margin-bottom: var(--s5);
 }
-@media (max-width: 1000px) { .grid-2 { grid-template-columns: 1fr; } }
+.ph h1 { font-size: 31px; letter-spacing: -.02em; }
+.ph h1 .count-note { font: 400 15px var(--sans); color: var(--ink-3); margin-left: var(--s3); letter-spacing: 0; }
+.ph p { font-size: 15px; color: var(--ink-2); margin-top: var(--s1); max-width: 70ch; }
+.ph-acts { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 22px;
-  box-shadow: var(--sh-2);
-  margin-bottom: 22px;
+.lbl {
+  font: 600 13px/1 var(--sans); letter-spacing: .02em;
+  color: var(--ink-3);
+  margin-bottom: var(--s3);
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3);
 }
-.card-head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
-}
-.card-head h2 { font-size: 15.5px; font-weight: 650; letter-spacing: -.01em; }
-.card-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.card-result { position: sticky; top: 118px; }
-@media (max-width: 1000px) { .card-result { position: static; } }
-
-.hint { font-size: 13.5px; line-height: 1.75; color: var(--text-2); margin-bottom: 16px; }
-.muted { color: var(--text-2); font-size: 12.5px; }
-.count-note { font-size: 12.5px; font-weight: 400; color: var(--text-3); }
+.count-note { font: 400 13.5px var(--sans); color: var(--ink-3); letter-spacing: 0; }
+.rule-dbl { height: 1px; background: var(--line); border-radius: var(--rp); }
+.note-line { font-size: 15px; line-height: 1.85; color: var(--ink-2); max-width: 72ch; margin-bottom: var(--s5); }
+.muted { color: var(--ink-2); font-size: 13.5px; }
 
 /* ============================================================
-   ฟอร์ม
-   ============================================================ */
-.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 15px; }
-.field > span {
-  font-size: 12.5px; font-weight: 550; color: var(--text-2);
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
-}
-.field em { font-style: normal; font-size: 11.5px; color: var(--text-3); font-family: var(--mono); }
-
-input[type=text], input[type=email], input[type=password], input[type=url],
-input[type=date], input[type=search], select, textarea {
-  font: inherit; font-size: 14.5px; color: var(--text);
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm); padding: 10px 12px; width: 100%;
-  transition: border-color .14s, box-shadow .14s, background .14s;
-}
-input::placeholder, textarea::placeholder { color: var(--text-3); }
-textarea { resize: vertical; line-height: 1.8; min-height: 130px; }
-input:hover, select:hover, textarea:hover { border-color: var(--text-3); }
-input:focus, select:focus, textarea:focus {
-  outline: none; background: var(--surface);
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3.5px var(--brand-ring);
-}
-
-.grid-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 0 15px; }
-
-.check {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-size: 13.5px; color: var(--text-2); margin-bottom: 15px; cursor: pointer;
-}
-.check input { accent-color: var(--brand); width: 16px; height: 16px; cursor: pointer; }
-.search { margin-bottom: 15px; }
-
-.meta-details {
-  margin-bottom: 15px; border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 0 14px; background: var(--surface-2);
-}
-.meta-details[open] { padding-bottom: 6px; }
-.meta-details summary {
-  cursor: pointer; font-size: 13px; font-weight: 550;
-  color: var(--text-2); padding: 11px 0;
-}
-.meta-details summary:hover { color: var(--text); }
-
-/* ============================================================
-   ปุ่ม
+   ปุ่มและฟอร์ม
    ============================================================ */
 .btn {
-  appearance: none; font: inherit; font-size: 14px; font-weight: 550;
-  border-radius: var(--r-sm); padding: 10px 17px; cursor: pointer;
-  border: 1px solid transparent;
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  transition: background .14s, border-color .14s, color .14s, box-shadow .14s, transform .06s;
+  appearance: none; cursor: pointer;
+  font: 500 14.5px var(--sans);
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 17px; min-height: 42px;
+  background: var(--card); color: var(--ink);
+  border: 0; border-radius: var(--rp);
+  box-shadow: var(--sh1), inset 0 0 0 1px var(--line);
+  transition: box-shadow .2s ease, background .2s ease, color .2s ease, transform .15s ease;
 }
-.btn:active { transform: translateY(.5px); }
+.btn:hover { box-shadow: var(--sh2), inset 0 0 0 1px var(--line-mid); }
+.btn:active { transform: translateY(1px); }
+.btn-sm { font-size: 13.5px; padding: 6px 13px; min-height: 34px; gap: 5px; }
 .btn-primary {
-  background: var(--brand); color: #fff;
-  box-shadow: 0 1px 2px rgba(213, 0, 28, .3), 0 6px 14px -8px rgba(213, 0, 28, .55);
+  background: var(--brand-soli); color: #fff; font-weight: 600;
+  box-shadow: 0 1px 2px rgba(133,0,18,.3), 0 6px 16px -8px rgba(133,0,18,.6);
 }
-.btn-primary:hover:not(:disabled) { background: var(--brand-hover); }
-.btn-ghost {
-  background: var(--surface); color: var(--text-2); border-color: var(--border-strong);
-}
-.btn-ghost:hover:not(:disabled) {
-  color: var(--text); border-color: var(--text-3); background: var(--surface-2);
-}
-.btn-sm { font-size: 12.5px; padding: 7px 12px; border-radius: var(--r-xs); }
-.btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
-
-.linklike {
-  background: none; border: none; font: inherit; color: var(--brand);
-  cursor: pointer; padding: 0; font-weight: 550;
-  text-decoration: underline; text-underline-offset: 3px;
-}
-.linklike:hover { color: var(--brand-hover); }
+.btn-primary:hover { background: var(--brand-soli-hi); box-shadow: 0 2px 5px rgba(133,0,18,.34), 0 10px 22px -8px rgba(133,0,18,.7); }
+.btn-danger { color: var(--brand); box-shadow: var(--sh1), inset 0 0 0 1px var(--brand); }
+.btn-danger:hover { background: var(--brand-soli); color: #fff; box-shadow: var(--sh2); }
+.btn-block { width: 100%; justify-content: center; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:disabled:hover { transform: none; box-shadow: var(--sh1), inset 0 0 0 1px var(--line); }
 
 kbd {
-  font-family: var(--mono); font-size: 10.5px; line-height: 1; font-weight: 500;
-  padding: 3px 5px; border-radius: 4px; margin-left: 3px;
-  background: rgba(255, 255, 255, .2); border: 1px solid rgba(255, 255, 255, .3);
+  font: 500 12px var(--mono); line-height: 1;
+  padding: 4px 6px; margin-left: 3px; border-radius: var(--r1);
+  background: none; border: 1px solid rgba(255,255,255,.5);
 }
 
-/* ============================================================
-   แถบปุ่มลงมือ — ติดล่างการ์ด กดได้โดยไม่ต้องเลื่อนหา
-   ============================================================ */
-.action-bar {
-  position: sticky; bottom: 0; z-index: 5;
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  margin: 6px -22px -22px; padding: 15px 22px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-radius: 0 0 var(--r) var(--r);
+.linklike {
+  appearance: none; background: none; border: 0; cursor: pointer; padding: 0;
+  font: inherit; font-weight: 600; color: var(--brand);
+  text-decoration: underline; text-underline-offset: 3px;
 }
-.action-bar .check { margin-bottom: 0; }
-.action-bar .btn { flex: none; }
 
-/* ============================================================
-   ที่วางไฟล์
-   ============================================================ */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--s4); }
+.field > span {
+  font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-2);
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s2);
+}
+.field em { font-style: normal; font-size: 13px; color: var(--ink-3); font-weight: 400; }
+.field-inline { flex-direction: row; align-items: center; gap: var(--s3); }
+.field-inline > span { flex: none; }
+
+input[type=text], input[type=email], input[type=password],
+input[type=date], input[type=search], select, textarea {
+  font: 400 16px var(--sans);
+  color: var(--ink); caret-color: var(--brand);
+  background: var(--card);
+  border: 0; border-radius: var(--r2);
+  box-shadow: inset 0 0 0 1px var(--line-mid);
+  padding: 10px 14px; width: 100%; min-height: 44px;
+  transition: box-shadow .2s ease;
+}
+input::placeholder, textarea::placeholder { color: var(--ink-3); }
+textarea { resize: vertical; line-height: 2; min-height: 190px; font-size: 16px; padding: var(--s3) var(--s4); }
+input:hover, select:hover, textarea:hover { box-shadow: inset 0 0 0 1px var(--ink-3); }
+input:focus, select:focus, textarea:focus { outline: none; box-shadow: inset 0 0 0 2px var(--brand); }
+
+.grid-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 var(--s4); }
+
+.check { display: inline-flex; align-items: center; gap: var(--s2); font-size: 14.5px; color: var(--ink-2); cursor: pointer; }
+.check input { accent-color: var(--brand-soli); width: 18px; height: 18px; cursor: pointer; }
+
+.fold { background: var(--sunk); border-radius: var(--r3); padding: 0 var(--s4); margin-bottom: var(--s4); }
+.fold[open] { padding-bottom: var(--s3); }
+.fold > summary { cursor: pointer; font: 500 14px var(--sans); color: var(--ink-2); padding: 11px 0; list-style-position: inside; }
+.fold > summary:hover { color: var(--ink); }
+
+/* ---------- ที่วางไฟล์ ---------- */
 .dropzone {
-  border: 1.5px dashed var(--border-strong); border-radius: var(--r-sm);
-  padding: 22px 18px; text-align: center; margin-bottom: 16px;
-  background: var(--surface-2);
-  transition: border-color .14s, background .14s;
+  border: 2px dashed var(--line-mid); border-radius: var(--r3);
+  background: var(--sunk);
+  padding: var(--s5); margin-bottom: var(--s4);
+  color: var(--ink-2);
+  display: grid; grid-template-columns: auto 1fr; gap: var(--s4); align-items: center;
+  transition: border-color .2s ease, background .2s ease, color .2s ease;
 }
-.dropzone:hover { border-color: var(--text-3); }
-.dropzone.is-over {
-  border-color: var(--brand); background: var(--brand-soft); border-style: solid;
+.dropzone:hover { border-color: var(--ink-3); }
+.dropzone.is-over { border-color: var(--brand); border-style: solid; background: var(--brand-wash); color: var(--brand); }
+.dropzone > .ic { color: var(--ink-3); }
+.dropzone p { font-size: 15.5px; font-weight: 600; color: var(--ink); }
+.dropzone small { display: block; font-size: 13.5px; margin-top: 3px; line-height: 1.75; color: var(--ink-2); }
+.dropzone-wide { padding: var(--s6); }
+
+/* ---------- แถบลงมือ ---------- */
+.action-bar, .run-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--s4); flex-wrap: wrap; margin-top: var(--s4);
 }
-.dropzone p { font-size: 14px; }
-.dropzone small { font-size: 12px; color: var(--text-3); display: block; margin-top: 3px; }
+/* ปุ่มหลักต้องอยู่ในสายตาเสมอ ไม่ต้องเลื่อนผ่านกล่องข้อความยาว ๆ ไปหา */
+.col-form .action-bar {
+  position: sticky; bottom: calc(var(--s5) * -1);
+  margin: var(--s4) calc(var(--s5) * -1) calc(var(--s5) * -1);
+  padding: var(--s3) var(--s5);
+  background: var(--card); border-top: 1px solid var(--line);
+  border-radius: 0 0 var(--r4) var(--r4);
+}
+.run-bar { justify-content: flex-start; }
+.run-bar .btn-primary { margin-left: auto; }
 
 /* ============================================================
-   ข้อความแจ้งเตือนและชิป
+   สองคอลัมน์
    ============================================================ */
-.notice {
-  font-size: 13.5px; line-height: 1.7; padding: 12px 14px;
-  border-radius: var(--r-sm); border: 1px solid;
+.two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: var(--s5); align-items: start; }
+.col-form { background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); padding: var(--s5); }
+.col-sheet { position: sticky; top: var(--s5); }
+.sheet-bar { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); margin-bottom: var(--s3); }
+.sheet-bar .lbl { margin: 0; }
+@media (max-width: 1280px) {
+  .two-col { grid-template-columns: 1fr; }
+  .col-sheet { position: static; }
 }
-.notice-warn { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
-.notice-error { background: var(--danger-soft); border-color: var(--danger-line); color: var(--danger); }
-.notice-ok { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); margin-bottom: 14px; }
-
-.chip {
-  font-size: 12px; font-weight: 550; padding: 3px 10px; border-radius: 99px;
-  background: var(--surface-3); color: var(--text-2);
-  white-space: nowrap; line-height: 1.6;
-}
-.chip-ok { background: var(--ok-soft); color: var(--ok); }
-.chip-warn { background: var(--warn-soft); color: var(--warn); }
-.chip-danger { background: var(--danger-soft); color: var(--danger); }
-.chip-info { background: var(--info-soft); color: var(--info); }
 
 /* ============================================================
    สถานะว่าง
    ============================================================ */
-.empty { text-align: center; padding: 44px 18px; color: var(--text-3); }
-.empty-icon {
-  font-size: 28px; display: grid; place-items: center;
-  width: 62px; height: 62px; margin: 0 auto 14px;
-  background: var(--surface-3); border-radius: 50%;
-}
-.empty p { font-size: 14.5px; color: var(--text); font-weight: 600; }
-.empty small { font-size: 12.5px; }
+.empty { padding: var(--s6); color: var(--ink-2); background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); }
+.empty > .ic { color: var(--line-mid); margin-bottom: var(--s3); }
+.empty p { font-size: 17px; font-weight: 700; color: var(--ink); }
+.empty small { font-size: 14px; }
 .empty-steps {
-  text-align: left; max-width: 330px; margin: 15px auto 18px; padding-left: 22px;
-  font-size: 13.5px; line-height: 2; color: var(--text-2);
+  max-width: 48ch; margin: var(--s3) 0 var(--s4); padding-left: 20px;
+  font-size: 14.5px; line-height: 2; color: var(--ink-2);
 }
-.empty-steps li::marker { color: var(--brand); font-weight: 700; }
+.empty-steps li::marker { font-family: var(--mono); color: var(--brand); font-weight: 700; }
 
 /* ============================================================
-   ผลวิเคราะห์ — เหตุผลหลัก
+   แผ่นผลวิเคราะห์
    ============================================================ */
-.res-head { border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 18px; }
-.res-name { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
-.res-sub { font-size: 12.5px; color: var(--text-2); margin-top: 3px; }
+.rec { background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); padding: var(--s5); }
+.rec-head {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--s4); align-items: start;
+  padding-bottom: var(--s4); border-bottom: 1px solid var(--line);
+}
+.rec-name { font-size: 25px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
+.rec-sub { font: 400 14px var(--sans); color: var(--ink-2); margin-top: 5px; line-height: 1.8; }
 
-.hero {
-  position: relative; overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--r); padding: 18px 20px 18px 22px;
-  margin-bottom: 18px;
-  background:
-    linear-gradient(180deg, var(--brand-soft) 0%, transparent 62%),
-    var(--surface-2);
-}
-.hero::before {
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-  background: linear-gradient(180deg, #f0243d, var(--brand));
-}
-.hero-label {
-  font-size: 11px; font-weight: 700; letter-spacing: .09em;
-  text-transform: uppercase; color: var(--brand); margin-bottom: 5px;
-}
-.hero-title { font-size: 23px; font-weight: 700; letter-spacing: -.025em; line-height: 1.25; }
-.hero-meta {
-  display: flex; align-items: center; gap: 11px; margin-top: 10px;
-  font-size: 12.5px; color: var(--text-2);
-}
-.hero-quote {
-  margin: 14px 0 0; padding: 12px 15px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: 14px; line-height: 1.85; color: var(--text-2);
-}
-.hero-quote::before { content: "“"; }
-.hero-quote::after { content: "”"; }
+.seal { text-align: right; white-space: nowrap; background: var(--sunk); border-radius: var(--r2); padding: var(--s2) var(--s3); }
+.seal-top { display: block; font: 600 12px var(--sans); letter-spacing: .02em; color: var(--ink-3); }
+.seal-no { display: block; font: 600 26px/1.15 var(--mono); letter-spacing: -.02em; color: var(--ink); }
+.seal-date { display: block; font: 400 14px var(--mono); color: var(--ink-2); }
 
-/* ---- จุดแสดงระดับ 1–5 ---- */
-.dots { display: inline-flex; gap: 3.5px; flex: none; }
-.dots i {
-  width: 9px; height: 9px; border-radius: 50%; flex: none;
-  background: var(--border-strong); display: block;
-}
-.dots.sev-low i.on  { background: var(--sev-low); }
-.dots.sev-mid i.on  { background: var(--sev-mid); }
-.dots.sev-high i.on { background: var(--sev-high); }
+.rec .rule-dbl { margin: var(--s4) 0; }
 
-/* ============================================================
-   ธงแดงที่ต้องตรวจก่อน
-   ============================================================ */
+.verdict { padding: var(--s4) 0 0; margin-bottom: var(--s4); }
+.verdict-cause { font-size: 27px; font-weight: 700; letter-spacing: -.02em; line-height: 1.3; }
+.verdict-meter { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s2); }
+.verdict-meter span { font: 500 14px var(--sans); color: var(--ink-2); }
+
+/* ข้อความอ้างอิงจากต้นฉบับ — ห้ามหายจากระบบนี้ */
+.evidence {
+  margin: var(--s3) 0 0; padding: var(--s4) var(--s5);
+  background: var(--sunk); border-radius: var(--r3);
+  font-size: 16px; line-height: 2; color: var(--ink-2);
+}
+/* เครื่องหมายคำพูดสีแบรนด์ทำหน้าที่เน้นแทนแถบสีข้าง
+   แถบหนาข้างการ์ดเป็นลายเซ็นของ UI ที่เครื่องสร้าง จึงเลี่ยง */
+.evidence::before {
+  content: "\201C"; color: var(--brand);
+  font-size: 1.6em; line-height: 0; vertical-align: -.3em; margin-right: 2px;
+}
+.evidence::after { content: "\201D"; color: var(--brand); }
+
+/* มาตรวัดความรุนแรง สเกลเดียวทั้งระบบ */
+.dots { display: inline-flex; gap: 3px; flex: none; }
+.dots i { width: 16px; height: 7px; flex: none; background: var(--sunk-2); display: block; border-radius: var(--rp); }
+.dots.sev-low  i.on { background: var(--ink-3); }
+.dots.sev-mid  i.on { background: var(--mid); }
+.dots.sev-high i.on { background: var(--crit); }
+.dots-lg i { width: 24px; height: 9px; }
+
+/* ---------- ช่องข้อมูล ---------- */
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--s3); margin-bottom: var(--s4); }
+.fields > div { background: var(--sunk); border-radius: var(--r3); padding: var(--s3) var(--s4); }
+.fields dt { font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-3); }
+.fields dd { margin: 2px 0 0; font-size: 17px; font-weight: 600; }
+.fields dd.is-ok   { color: var(--ok); }
+.fields dd.is-warn { color: var(--mid); }
+.fields dd.is-bad  { color: var(--brand); }
+
+/* ---------- ประเด็นที่ต้องสอบข้อเท็จจริง ---------- */
 .alert {
-  border: 1px solid var(--danger-line); background: var(--danger-soft);
-  border-radius: var(--r); padding: 16px 18px; margin-bottom: 18px;
+  background: var(--brand-wash); border-radius: var(--r3);
+  box-shadow: inset 0 0 0 1px var(--brand);
+  padding: var(--s4) var(--s5); margin-bottom: var(--s4);
 }
 .alert-head {
-  font-size: 14.5px; font-weight: 700; color: var(--danger);
-  margin-bottom: 11px; letter-spacing: -.01em;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 16px; font-weight: 700; color: var(--brand); margin-bottom: var(--s2);
 }
-.alert-item {
-  display: flex; flex-direction: column; gap: 2px;
-  padding: 10px 0; border-top: 1px solid var(--danger-line);
-  font-size: 13.5px; line-height: 1.75; color: var(--text);
-}
-.alert-item b { font-size: 13px; color: var(--danger); }
-.alert-foot { margin-top: 11px; font-size: 11.5px; color: var(--text-2); }
+.alert-item { padding: var(--s3) 0; border-top: 1px solid rgba(213,0,28,.18); font-size: 15px; line-height: 1.8; }
+.alert-item b { display: block; font-size: 14px; color: var(--brand); }
+.alert-foot { margin-top: var(--s3); font-size: 13.5px; color: var(--ink-2); line-height: 1.75; }
 
-/* ============================================================
-   สรุปสถานะ 4 ช่อง
-   ============================================================ */
-.tiles {
-  /* มี 3 ช่อง — 150px ทำให้เรียงได้แถวเดียวพอดีในคอลัมน์ผลลัพธ์
-     พอจอแคบลงจะยุบเป็น 2 แล้ว 1 เองตามพื้นที่ */
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px; margin-bottom: 22px;
-}
-.tile {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface-2); padding: 12px 14px;
-}
-.tile-label { font-size: 11px; font-weight: 550; color: var(--text-3); }
-.tile-value { font-size: 15.5px; font-weight: 650; margin-top: 3px; line-height: 1.4; }
-.tile-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; line-height: 1.5; }
-.tile-ok     { background: var(--ok-soft);     border-color: var(--ok-line); }
-.tile-ok .tile-value { color: var(--ok); }
-.tile-warn   { background: var(--warn-soft);   border-color: var(--warn-line); }
-.tile-warn .tile-value { color: var(--warn); }
-.tile-danger { background: var(--danger-soft); border-color: var(--danger-line); }
-.tile-danger .tile-value { color: var(--danger); }
-
-/* ============================================================
-   บล็อกเนื้อหาย่อย
-   ============================================================ */
-.res-block { margin-bottom: 22px; }
+/* ---------- บล็อกย่อย ---------- */
+.res-block { margin-bottom: var(--s5); }
 .res-block > h3 {
-  font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--text-3); margin-bottom: 10px;
+  font: 600 13px var(--sans); letter-spacing: .02em;
+  color: var(--ink-3); margin-bottom: var(--s3);
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3);
 }
-.res-summary { font-size: 14.5px; line-height: 1.85; }
-.warn-note {
-  font-style: normal; font-size: 11px; font-weight: 600; color: var(--warn);
-  text-transform: none; letter-spacing: 0; margin-left: 8px;
-}
+.warn-note { font-style: normal; font: 500 13.5px var(--sans); color: var(--mid); letter-spacing: 0; }
+.res-summary { font-size: 16px; line-height: 2; max-width: 70ch; }
 
-/* ---- ปัจจัยรอง ---- */
-.factors { display: flex; flex-direction: column; gap: 7px; }
-.factor {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface-2); transition: border-color .14s;
-}
-.factor:hover { border-color: var(--border-strong); }
+.factors { display: flex; flex-direction: column; gap: 3px; }
+.factor { border-radius: var(--r2); transition: background .2s ease; }
+.factor:hover { background: var(--sunk); }
 .factor > summary {
-  cursor: pointer; padding: 11px 14px; display: flex;
-  align-items: center; justify-content: space-between; gap: 14px; font-size: 14px;
+  cursor: pointer; padding: var(--s3) var(--s4);
+  display: grid; grid-template-columns: 1fr auto; gap: var(--s4); align-items: center;
+  font-size: 15.5px; list-style: none;
 }
 .factor > summary::-webkit-details-marker { display: none; }
-.factor > summary::marker { content: ""; }
-.factor-name { font-weight: 550; }
-.factor > blockquote {
-  margin: 0; padding: 0 14px 13px; font-size: 13.5px;
-  line-height: 1.85; color: var(--text-2);
-}
-.factor > blockquote::before { content: "“"; }
-.factor > blockquote::after { content: "”"; }
-.factor > p { padding: 0 14px 13px; margin: 0; }
+.factor-name { font-weight: 500; }
+.factor > blockquote { margin: 0; padding: 0 var(--s4) var(--s3); font-size: 14.5px; line-height: 2; color: var(--ink-2); }
+.factor > blockquote::before { content: "\201C"; }
+.factor > blockquote::after  { content: "\201D"; }
+.factor > p { padding: 0 var(--s4) var(--s3); margin: 0; }
 
-/* ---- คำพูดและรายการ ---- */
-.quotes { display: flex; flex-direction: column; gap: 9px; }
-.quote {
-  border-left: 3px solid var(--border-strong); padding: 3px 0 3px 13px;
-  font-size: 13.5px; line-height: 1.85; color: var(--text-2);
+.quotes { display: flex; flex-direction: column; gap: var(--s2); }
+.quote { padding: var(--s3) var(--s4); background: var(--sunk); border-radius: var(--r3); font-size: 15px; line-height: 2; color: var(--ink-2); }
+.plain-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; }
+.plain-list li {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: baseline;
+  font-size: 15px; line-height: 1.85; padding: var(--s2) var(--s4);
+  background: var(--sunk); border-radius: var(--r2);
 }
+.plus { color: var(--ok); font-weight: 700; font-family: var(--mono); }
 
-.plain-list {
-  list-style: none; padding: 0; margin: 0;
-  display: flex; flex-direction: column; gap: 8px;
-  font-size: 13.5px; line-height: 1.8;
-}
-.plain-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; }
-.plus { color: var(--ok); font-weight: 700; }
-
-.actions-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
-.actions-list li {
-  display: grid; grid-template-columns: auto 1fr; gap: 11px; align-items: baseline;
-  font-size: 13.5px; line-height: 1.8; padding: 10px 13px;
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm);
-}
-
-/* ---- ธงเฝ้าระวังระดับรอง ---- */
-.flag {
-  display: flex; gap: 11px; align-items: flex-start; padding: 11px 13px;
-  border-radius: var(--r-sm); font-size: 13.5px; line-height: 1.75; margin-bottom: 8px;
-  background: var(--danger-soft); border: 1px solid var(--danger-line);
-}
-.flag-med { background: var(--warn-soft); border-color: var(--warn-line); }
-.flag-low { background: var(--info-soft); border-color: var(--info-line); }
-.flag b { display: block; font-size: 12.5px; }
-
-/* ---- สิ่งที่ควรทำต่อ ---- */
-.steps {
-  list-style: none; counter-reset: step; padding: 0; margin: 0;
-  display: flex; flex-direction: column; gap: 8px;
-}
+/* ---------- สิ่งที่ควรทำต่อ ---------- */
+.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--s2); }
 .step {
-  counter-increment: step;
-  display: grid; grid-template-columns: auto auto 1fr; gap: 11px; align-items: baseline;
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface-2); font-size: 13.5px; line-height: 1.8;
+  counter-increment: s;
+  display: grid; grid-template-columns: 30px 104px 1fr; gap: var(--s3); align-items: baseline;
+  padding: var(--s3) var(--s4);
+  background: var(--sunk); border-radius: var(--r3);
+  font-size: 15px; line-height: 1.85;
 }
-.step::before {
-  content: counter(step);
-  font-family: var(--mono); font-size: 11.5px; font-weight: 500;
-  color: var(--text-3); min-width: 13px;
-}
+.step::before { content: counter(s, decimal-leading-zero); font: 500 14px var(--mono); color: var(--ink-3); }
 .step-owner {
-  font-size: 11.5px; font-weight: 650; white-space: nowrap;
-  padding: 2px 9px; border-radius: 99px;
-  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-2);
+  font: 600 13px var(--sans); letter-spacing: .02em;
+  color: var(--ink-2); white-space: nowrap; text-align: center;
+  background: var(--card); border-radius: var(--rp); padding: 3px 11px; box-shadow: var(--sh1);
 }
-.step-text { color: var(--text); }
-.step-high { background: var(--danger-soft); border-color: var(--danger-line); }
-.step-high .step-owner { color: var(--danger); border-color: var(--danger-line); background: var(--surface); }
+.step-high .step-owner { color: #fff; background: var(--brand-soli); }
+.step-text { color: var(--ink); }
 
-/* ---- แถบเทียบสัดส่วน ---- */
-.bars { display: flex; flex-direction: column; gap: 9px; }
+/* ---------- ธงเฝ้าระวัง ---------- */
+.flag {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: start;
+  padding: var(--s3) var(--s4); margin-bottom: var(--s2);
+  background: var(--sunk); border-radius: var(--r3);
+  font-size: 15px; line-height: 1.8;
+}
+.flag > .ic { color: var(--crit); margin-top: 4px; }
+.flag b { display: block; font-size: 14px; }
+.flag-med > .ic { color: var(--mid); }
+.flag-low > .ic { color: var(--ink-3); }
+
+/* ---------- แถบเทียบสัดส่วน ---------- */
+.bars { display: flex; flex-direction: column; gap: var(--s1); }
 .bar-row {
-  display: grid; grid-template-columns: minmax(130px, 34%) 1fr auto;
-  gap: 12px; align-items: center; font-size: 13.5px;
+  display: grid; grid-template-columns: minmax(160px, 30%) 1fr auto; gap: var(--s4);
+  align-items: center; font-size: 15px; padding: var(--s2) 0;
 }
-.bar-track { height: 8px; background: var(--surface-3); border-radius: 99px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 99px; background: var(--brand); }
-.bar-val { font-family: var(--mono); font-size: 11.5px; color: var(--text-2); min-width: 42px; text-align: right; }
+.bar-track { height: 12px; background: var(--sunk-2); border-radius: var(--rp); overflow: hidden; }
+.bar-fill { height: 100%; background: var(--ink-3); display: block; border-radius: var(--rp); }
+.bar-fill.sev-high { background: var(--crit); }
+.bar-fill.sev-mid  { background: var(--mid); }
+.bar-fill.sev-low  { background: var(--ink-3); }
+.bar-val { font: 500 13.5px var(--mono); color: var(--ink-2); min-width: 58px; text-align: right; }
 
-/* ---- รายละเอียดที่พับเก็บ ---- */
-.more { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 14px; }
+.more { margin-top: var(--s3); }
 .more > summary {
-  cursor: pointer; font-size: 13.5px; font-weight: 550; color: var(--text-2);
-  padding: 5px 0; list-style-position: inside;
+  cursor: pointer; font: 500 14.5px var(--sans); color: var(--ink-2);
+  padding: var(--s2) var(--s4); background: var(--sunk); border-radius: var(--rp);
+  list-style-position: inside; display: inline-block;
+  transition: background .2s ease, color .2s ease;
 }
-.more > summary:hover { color: var(--text); }
-.more-body { padding-top: 16px; }
-.more-body .res-block:last-of-type { margin-bottom: 12px; }
+.more > summary:hover { background: var(--sunk-2); color: var(--ink); }
+.more-body { padding-top: var(--s5); }
+
+/* ---------- คำเตือนความแม่น — ห้ามหาย ---------- */
+.rec-warn {
+  margin-top: var(--s4); padding: var(--s3) var(--s4);
+  background: var(--mid-wash); border-radius: var(--r3);
+  font-size: 13.5px; line-height: 1.8; color: var(--mid);
+  display: grid; grid-template-columns: auto 1fr; gap: var(--s3); align-items: start;
+}
+.rec-warn > .ic { color: var(--mid); margin-top: 3px; }
+
+.rec-sign {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--s4);
+  margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line);
+}
+.rec-sign span { display: block; font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-3); }
+.rec-sign b { font-size: 15.5px; font-weight: 600; }
+
+/* ป้ายกำกับข้อมูลตัวอย่าง */
+.demo-band {
+  display: flex; align-items: center; gap: var(--s2);
+  font: 600 13px var(--sans); letter-spacing: .02em;
+  background: var(--mid-soli); color: #fff;
+  padding: 7px var(--s4); margin-bottom: var(--s4); border-radius: var(--rp);
+}
+.demo-tag {
+  font: 600 12px var(--sans); letter-spacing: .02em;
+  background: var(--mid-soli); color: #fff; padding: 2px 9px; border-radius: var(--rp);
+}
 
 /* ============================================================
-   แดชบอร์ด
+   ตารางรายการ
    ============================================================ */
-.stat-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
-  gap: 12px; margin-bottom: 24px;
-}
-.stat {
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 16px;
-}
-.stat-num { font-size: 29px; font-weight: 700; line-height: 1.05; letter-spacing: -.03em; }
-.stat-label { font-size: 12px; color: var(--text-2); margin-top: 5px; line-height: 1.5; }
+.reg-block { margin-top: var(--s6); }
+.reg-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s3); }
+.reg-head .lbl { margin: 0; }
+.tools { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.tools .to { font-size: 14px; color: var(--ink-2); }
+.ifield { position: relative; display: flex; align-items: center; }
+.ifield > .ic { position: absolute; left: 13px; color: var(--ink-3); pointer-events: none; }
+.ifield input { padding-left: 40px; min-width: 250px; border-radius: var(--rp); }
+.tools select { width: auto; min-width: 190px; }
+input.date-input { width: auto; min-width: 158px; font-family: var(--mono); font-size: 14px; }
 
-.dept-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.dept-table th {
-  text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .07em;
-  text-transform: uppercase; color: var(--text-3);
-  padding: 0 11px 8px; border-bottom: 1px solid var(--border); white-space: nowrap;
+.filter-chips { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s4); }
+.fchip {
+  appearance: none; cursor: pointer;
+  font: 500 13.5px var(--sans); min-height: 34px;
+  padding: 5px 15px; border-radius: var(--rp);
+  background: var(--card); border: 0; color: var(--ink-2);
+  box-shadow: var(--sh1), inset 0 0 0 1px var(--line);
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
 }
-.dept-table td { padding: 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
-.dept-table tr:last-child td { border-bottom: none; }
-.dept-table tbody tr:hover td { background: var(--surface-2); }
-.dept-table .num { font-family: var(--mono); font-size: 12.5px; text-align: right; white-space: nowrap; }
-.dept-table .has-risk { color: var(--danger); font-weight: 700; }
+.fchip:hover { color: var(--ink); box-shadow: var(--sh2), inset 0 0 0 1px var(--line-mid); }
+.fchip.is-on { background: var(--ink); color: var(--page); font-weight: 600; box-shadow: var(--sh2); }
+.fchip b { font-family: var(--mono); font-weight: 600; margin-left: 5px; }
+
+.reg-list { display: flex; flex-direction: column; gap: var(--s2); }
+
+.reg-headrow {
+  display: grid; gap: var(--s4); align-items: end;
+  padding: 0 var(--s4) var(--s2);
+  font: 600 13px var(--sans); letter-spacing: .02em;
+  color: var(--ink-3);
+}
+.reg-headrow-person { grid-template-columns: 40px minmax(140px, 1.15fr) minmax(130px, 1.25fr) 96px 180px; }
+.reg-headrow-record { grid-template-columns: minmax(150px, 1.1fr) minmax(140px, 1.3fr) 96px 180px 104px; }
+
+.person, .batch-item {
+  background: var(--card); border-radius: var(--r3); box-shadow: var(--sh1);
+  transition: box-shadow .2s ease;
+}
+.person:hover, .batch-item:hover { box-shadow: var(--sh2); }
+.person > summary, .batch-item > summary {
+  cursor: pointer; list-style: none;
+  padding: var(--s3) var(--s4); border-radius: var(--r3);
+  display: grid; gap: var(--s4); align-items: center;
+  grid-template-columns: 40px minmax(140px, 1.15fr) minmax(130px, 1.25fr) 96px 180px;
+}
+.person > summary::-webkit-details-marker,
+.batch-item > summary::-webkit-details-marker { display: none; }
+/* ลูกศรบอกว่าแถวนี้กดกางได้ ไม่งั้นผู้ใช้ไม่รู้ว่ามีรายละเอียดซ่อนอยู่ */
+.person > summary, .batch-item > summary { position: relative; padding-right: 40px; }
+.person > summary::after, .batch-item > summary::after {
+  content: ""; position: absolute; right: 18px; top: 50%;
+  width: 8px; height: 8px; margin-top: -6px;
+  border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3);
+  transform: rotate(45deg); transform-origin: 70% 70%;
+  transition: transform .2s ease;
+}
+.person[open] > summary::after, .batch-item[open] > summary::after { transform: rotate(-135deg); }
+.person > summary:hover::after, .batch-item > summary:hover::after { border-color: var(--brand); }
+.person[open], .batch-item[open] { box-shadow: var(--sh3); }
+.person[open] > summary, .batch-item[open] > summary { border-radius: var(--r3) var(--r3) 0 0; }
+
+.person-num { font: 500 14px var(--mono); color: var(--ink-3); }
+.person-id b { display: block; font-size: 16px; font-weight: 600; letter-spacing: -.01em; }
+.person-id em { font-style: normal; display: block; font-size: 13px; color: var(--ink-3); margin-top: 1px; }
+.person-reason { font-size: 14.5px; color: var(--ink-2); }
+.person-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+.badge-flag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font: 600 13px var(--mono); padding: 2px 9px; border-radius: var(--rp);
+  background: var(--brand-soli); color: #fff;
+}
+.badge-tone { font: 500 13px var(--sans); padding: 2px 11px; border-radius: var(--rp); background: var(--sunk); color: var(--ink-2); }
+.badge-tone.t-neg { background: var(--brand-wash); color: var(--brand); }
+.badge-tone.t-mix { background: var(--mid-wash); color: var(--mid); }
+.badge-tone.t-pos { background: var(--ok-wash); color: var(--ok); }
+
+.batch-body { padding: 0 var(--s4) var(--s5); }
+.batch-body .rec { box-shadow: none; padding: var(--s4) 0 0; background: none; border-radius: 0; }
+
+.batch-item > summary { grid-template-columns: minmax(150px, 1.1fr) minmax(140px, 1.3fr) 96px 180px 104px; }
+.batch-item > summary strong { font-size: 16px; font-weight: 600; }
+.batch-item > summary .muted { color: var(--ink-3); font: 400 13.5px var(--mono); }
+
+/* ============================================================
+   ตัวเลขสรุป
+   ============================================================ */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--s3); margin-bottom: var(--s5); }
+.stat { padding: var(--s4) var(--s5); background: var(--card); border-radius: var(--r3); box-shadow: var(--sh2); }
+.stat-num { font: 600 36px/1 var(--mono); letter-spacing: -.03em; }
+.stat-label { font-size: 13.5px; color: var(--ink-2); margin-top: var(--s2); line-height: 1.5; }
+
+.dept-table { width: 100%; border-collapse: separate; border-spacing: 0 4px; font-size: 15px; }
+.dept-table th {
+  text-align: left; font: 600 13px var(--sans); letter-spacing: .02em;
+  color: var(--ink-3); padding: 0 var(--s4) var(--s2); white-space: nowrap;
+}
+.dept-table td { padding: var(--s3) var(--s4); background: var(--card); vertical-align: top; }
+.dept-table td:first-child { border-radius: var(--r2) 0 0 var(--r2); }
+.dept-table td:last-child { border-radius: 0 var(--r2) var(--r2) 0; }
+.dept-table tbody tr:hover td { background: var(--sunk); }
+.dept-table .num { font-family: var(--mono); font-size: 14.5px; text-align: right; white-space: nowrap; }
+.dept-table .has-risk { color: var(--brand); font-weight: 600; }
 .table-scroll { overflow-x: auto; }
 
 /* ============================================================
-   แถบเครื่องมือรายชื่อ
+   หน้าผู้บริหาร
    ============================================================ */
-.list-toolbar { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin-bottom: 11px; }
-.list-toolbar .search { flex: 1; min-width: 190px; margin-bottom: 0; }
-.sort-select { width: auto; min-width: 180px; }
+.lead-figure { padding: var(--s6); margin-bottom: var(--s5); background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); }
+.lead-num { font: 600 108px/.85 var(--mono); letter-spacing: -.05em; }
+.lead-side { margin-top: var(--s4); max-width: 58ch; }
+.lead-cap { font-size: 17px; color: var(--ink-2); }
+.lead-cap b { color: var(--ink); font-weight: 700; }
+.lead-delta {
+  margin-top: var(--s3); display: inline-flex; align-items: baseline; gap: 6px;
+  font: 500 14px var(--mono); padding: 4px 13px; border-radius: var(--rp); background: var(--sunk);
+}
+.d-worse  { color: var(--brand); background: var(--brand-wash); }
+.d-better { color: var(--ok); background: var(--ok-wash); }
+.d-same   { color: var(--ink-2); }
 
-.filter-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
-.fchip {
-  appearance: none; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer;
-  padding: 6px 13px; border-radius: 99px;
-  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-2);
-  transition: background .14s, border-color .14s, color .14s;
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--s3); margin-bottom: var(--s6); }
+.kpi { padding: var(--s4) var(--s5); background: var(--card); border-radius: var(--r3); box-shadow: var(--sh2); }
+.kpi-label { font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-3); }
+.kpi-row { display: flex; align-items: baseline; gap: 7px; margin-top: var(--s1); flex-wrap: wrap; }
+.kpi-num { font: 600 27px/1 var(--mono); letter-spacing: -.02em; }
+.kpi-unit { font-size: 14px; color: var(--ink-2); }
+.kpi-note { font-size: 13.5px; color: var(--ink-2); margin-top: var(--s2); line-height: 1.6; }
+
+.trend { background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); padding: var(--s5); }
+.trend svg { display: block; width: 100%; height: auto; max-height: 250px; }
+.trend-scroll { overflow-x: auto; }
+.legend { display: flex; gap: var(--s5); flex-wrap: wrap; margin-top: var(--s4); font-size: 13.5px; color: var(--ink-2); }
+.legend i { width: 16px; height: 9px; display: inline-block; margin-right: 7px; border-radius: var(--rp); }
+
+.theme-row {
+  display: grid; grid-template-columns: minmax(170px, 1.2fr) minmax(90px, 2fr) auto auto;
+  gap: var(--s4); align-items: center; font-size: 15px;
+  padding: var(--s3) var(--s4); border-radius: var(--r2);
 }
-.fchip:hover { color: var(--text); border-color: var(--text-3); background: var(--surface-2); }
-.fchip.is-on {
-  background: var(--brand); border-color: var(--brand); color: #fff;
-  box-shadow: 0 1px 2px rgba(213, 0, 28, .28);
+.theme-row:hover { background: var(--sunk); }
+.theme-name { font-weight: 500; }
+.theme-name em { display: block; font-style: normal; font: 400 13px var(--sans); color: var(--ink-3); }
+.theme-count { font: 500 14px var(--mono); color: var(--ink-2); text-align: right; white-space: nowrap; }
+.delta { font: 600 13px var(--mono); padding: 3px 11px; white-space: nowrap; border-radius: var(--rp); background: var(--sunk); }
+.delta-worse  { color: var(--brand); background: var(--brand-wash); }
+.delta-better { color: var(--ok); background: var(--ok-wash); }
+.delta-same   { color: var(--ink-3); }
+
+.decision {
+  display: grid; grid-template-columns: 104px 1fr; gap: var(--s4); align-items: start;
+  padding: var(--s3) var(--s4); margin-bottom: var(--s2);
+  background: var(--sunk); border-radius: var(--r3);
 }
-.fchip b { font-weight: 700; margin-left: 2px; }
+.decision-owner {
+  font: 600 13px var(--sans); letter-spacing: .02em;
+  color: var(--ink-2); white-space: nowrap; text-align: center;
+  background: var(--card); border-radius: var(--rp); padding: 3px 11px; box-shadow: var(--sh1);
+}
+.decision-high .decision-owner { color: #fff; background: var(--brand-soli); }
+.decision-text { font-size: 15.5px; line-height: 1.85; }
+.decision-why { font: 400 13.5px var(--sans); color: var(--ink-3); margin-top: 2px; }
 
 /* ============================================================
-   แถวรายชื่อ
+   ใช้ร่วมกัน · คำสำคัญ · แจ้งเตือน
    ============================================================ */
-.batch-list, .history-list { display: flex; flex-direction: column; gap: 7px; }
+.team-strip {
+  display: grid; grid-template-columns: minmax(240px, 330px) 1fr; gap: var(--s5); align-items: end;
+  padding: var(--s5); margin-bottom: var(--s5);
+  background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2);
+}
+.team-strip .field { margin-bottom: 0; }
+.team-acts { display: flex; gap: var(--s2); flex-wrap: wrap; }
 
-.person {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface); overflow: hidden;
-  transition: border-color .14s, box-shadow .14s;
+.danger-zone {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  margin-top: var(--s8); padding: var(--s5);
+  background: var(--card); border-radius: var(--r4);
+  box-shadow: var(--sh1), inset 0 0 0 1px var(--line-mid);
 }
-.person:hover { border-color: var(--border-strong); }
-.person[open] { border-color: var(--border-strong); box-shadow: var(--sh-2); }
-.person > summary {
-  cursor: pointer; padding: 12px 15px; display: grid; gap: 13px; align-items: center;
-  grid-template-columns: 26px minmax(120px, 1.1fr) minmax(120px, 1.3fr) auto;
-}
-.person > summary::-webkit-details-marker { display: none; }
-.person > summary::marker { content: ""; }
-.person > summary:hover { background: var(--surface-2); }
-.person-num { font-family: var(--mono); font-size: 11.5px; color: var(--text-3); }
-.person-id b { display: block; font-size: 14.5px; font-weight: 600; letter-spacing: -.01em; }
-.person-id em { font-style: normal; font-size: 11.5px; color: var(--text-3); }
-.person-reason { font-size: 13.5px; color: var(--text-2); }
-.person-badges {
-  display: flex; gap: 7px; align-items: center; justify-content: flex-end; flex-wrap: wrap;
-}
-.badge-flag {
-  font-size: 11.5px; font-weight: 650; padding: 2px 9px; border-radius: 99px;
-  background: var(--danger-soft); color: var(--danger); white-space: nowrap;
-}
-.person .batch-body,
-.batch-item .batch-body {
-  padding: 6px 17px 18px; border-top: 1px solid var(--border); background: var(--surface-2);
-}
+.danger-zone b { font-size: 15.5px; }
+.danger-zone p { font-size: 13.5px; color: var(--ink-2); margin-top: 2px; max-width: 64ch; }
 
-/* รายการประวัติใช้โครงเดียวกับ .person */
-.batch-item {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface); overflow: hidden;
-}
-.batch-item > summary {
-  cursor: pointer; padding: 12px 15px; display: flex; align-items: center;
-  gap: 10px; flex-wrap: wrap; font-size: 13.5px;
-}
-.batch-item > summary:hover { background: var(--surface-2); }
-.batch-item > summary strong { font-weight: 600; font-size: 14.5px; }
-.batch-item > summary .muted { color: var(--text-3); font-size: 12px; }
+.lex-row { background: var(--card); border-radius: var(--r3); box-shadow: var(--sh1); padding: var(--s4) var(--s5); margin-bottom: var(--s2); }
+.lex-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s2); flex-wrap: wrap; }
+.lex-head b { font-size: 17px; font-weight: 700; }
+.lex-default { margin-bottom: var(--s2); }
+.lex-default summary { cursor: pointer; font: 400 13.5px var(--sans); color: var(--ink-2); }
+.lex-default summary:hover { color: var(--ink); }
+.lex-default p { font-size: 14px; color: var(--ink-2); line-height: 2; margin-top: 7px; max-width: 92ch; }
+.lex-input { font-size: 14.5px; }
 
-.batch-bar { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; margin-top: 10px; }
-.batch-bar .check { margin-bottom: 0; }
+.notice { font-size: 15px; line-height: 1.8; padding: var(--s3) var(--s4); border-radius: var(--r3); margin-bottom: var(--s3); }
+.notice-warn  { background: var(--mid-wash); color: var(--mid); }
+.notice-error { background: var(--brand-wash); color: var(--brand); }
+.notice-ok    { background: var(--ok-wash); color: var(--ok); }
 
-/* ============================================================
-   ตัวแก้คำสำคัญ
-   ============================================================ */
-.lex-row {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  padding: 14px 15px; margin-bottom: 10px; background: var(--surface-2);
-}
-.lex-head {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; font-size: 14.5px; margin-bottom: 9px; flex-wrap: wrap;
-}
-.lex-default { margin-bottom: 9px; }
-.lex-default summary { cursor: pointer; font-size: 12px; color: var(--text-3); }
-.lex-default summary:hover { color: var(--text-2); }
-.lex-default p { font-size: 12.5px; color: var(--text-2); line-height: 1.9; margin-top: 7px; }
-.lex-input { font-size: 13.5px; }
+.form-file { background: var(--sunk); border-radius: var(--r3); padding: var(--s3) var(--s4); margin-bottom: var(--s2); font-size: 14.5px; }
+.form-file b { font-size: 15.5px; }
+.form-file .form-meta { color: var(--ink-2); font: 400 13.5px var(--sans); margin: 2px 0 var(--s2); line-height: 1.75; }
+.form-file .form-text { color: var(--ink-2); font-size: 14px; line-height: 2; white-space: pre-wrap; }
+.form-file .form-bad { color: var(--brand); font-size: 14px; }
 
-code {
-  font-family: var(--mono); font-size: .88em;
-  background: var(--surface-3); border-radius: 4px; padding: 2px 6px;
-}
-
-/* ============================================================
-   ไฟล์ฟอร์มที่อ่านได้
-   ============================================================ */
-.form-file {
-  border: 1px solid var(--border); border-radius: var(--r-sm);
-  padding: 12px 14px; margin-bottom: 9px; background: var(--surface-2); font-size: 13px;
-}
-.form-file b { font-size: 14px; }
-.form-file .form-meta { color: var(--text-2); font-size: 12px; margin: 3px 0 8px; line-height: 1.6; }
-.form-file .form-text { color: var(--text-2); font-size: 12.5px; line-height: 1.85; white-space: pre-wrap; }
-.form-file .form-bad { color: var(--danger); font-size: 12.5px; }
-
-/* ============================================================
-   ข้อความแจ้งชั่วคราว
-   ============================================================ */
 .toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: var(--text); color: var(--bg);
-  font-size: 13.5px; font-weight: 500;
-  padding: 11px 20px; border-radius: 99px; z-index: 100;
-  box-shadow: var(--sh-3);
-  animation: toast-in .18s ease-out;
+  position: fixed; bottom: var(--s5); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--page);
+  font: 500 15px var(--sans); padding: 12px 24px; border-radius: var(--rp);
+  box-shadow: var(--sh3); z-index: 100;
+  animation: toast-in .22s cubic-bezier(.2, .8, .2, 1);
 }
-@keyframes toast-in {
-  from { opacity: 0; transform: translate(-50%, 8px); }
-  to   { opacity: 1; transform: translate(-50%, 0); }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* ============================================================
+   หน้าเอกสารอธิบาย
+   ============================================================ */
+.doc { max-width: 74ch; background: var(--card); border-radius: var(--r4); box-shadow: var(--sh2); padding: var(--s6); }
+.doc h2 { font: 600 13px var(--sans); letter-spacing: .02em; color: var(--ink-3); margin: var(--s6) 0 var(--s3); }
+.doc h2:first-child { margin-top: 0; }
+.doc p { font-size: 16px; line-height: 2.05; max-width: 68ch; }
+.doc ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 3px; }
+.doc li {
+  position: relative; padding: var(--s2) var(--s4) var(--s2) 42px;
+  background: var(--sunk); border-radius: var(--r2);
+  font-size: 15px; line-height: 1.85;
 }
+.doc li::before { position: absolute; left: var(--s4); top: var(--s2); font: 700 15px var(--mono); }
+.list-yes li::before { content: "+"; color: var(--ok); }
+.list-no  li::before { content: "\2212"; color: var(--brand); }
+
+/* ============================================================
+   หน้าล็อกอิน
+   ============================================================ */
+.gate { position: fixed; inset: 0; z-index: 200; overflow: auto; display: grid; place-items: center; padding: var(--s5); background: var(--page); }
+.gate-sheet { width: 100%; max-width: 400px; background: var(--card); border-radius: var(--r4); box-shadow: var(--sh3); padding: var(--s6); }
+.gate-seal { color: var(--brand); margin-bottom: var(--s3); }
+.gate-sheet h1 { font-size: 23px; line-height: 1.45; }
+.gate-org { font: 400 14px var(--sans); color: var(--ink-2); margin-top: var(--s1); }
+.gate-sheet .rule-dbl { margin: var(--s4) 0 var(--s5); }
+.gate-foot { font-size: 13.5px; line-height: 1.8; color: var(--ink-2); margin-top: var(--s4); }
 
 /* ============================================================
    จอแคบ
    ============================================================ */
-@media (max-width: 720px) {
-  .person > summary { grid-template-columns: 22px 1fr; row-gap: 8px; }
-  .person-reason, .person-badges { grid-column: 2 / -1; }
-  .person-badges { justify-content: flex-start; }
-}
+@media (max-width: 1000px) {
+  :root { --rail: 100%; }
+  .shell { grid-template-columns: 1fr; padding: var(--s2); gap: var(--s2); }
+  .rail {
+    position: sticky; top: var(--s2); z-index: 50; height: auto;
+    flex-direction: row; align-items: center;
+    padding: var(--s2); overflow-x: auto; border-radius: var(--r3);
+  }
+  .rail-mark { padding: 0 var(--s3) 0 var(--s2); }
+  .rail-mark::after { display: none; }
+  .rail-nav { flex-direction: row; flex: 1; }
+  .rail-gap { display: none; }
+  .tab { padding: var(--s2) var(--s3); grid-template-columns: auto auto auto; white-space: nowrap; font-size: 13.5px; }
+  .rail-foot { margin: 0 0 0 auto; display: flex; align-items: center; gap: var(--s2); padding: 0 0 0 var(--s3); border: 0; }
+  .who { display: none; }
+  .work { padding: var(--s4) var(--s3) var(--s7); }
+  .ph h1 { font-size: 25px; }
+  .col-form { padding: var(--s4); }
 
-@media (max-width: 520px) {
-  body { font-size: 15px; }
-  .topbar { padding: 11px 15px; }
-  .brand-sm p { display: none; }
-  .tabs { padding: 0 15px; gap: 0; }
-  .tab { padding: 12px 10px 11px; font-size: 14px; }
-  .wrap { padding: 16px 15px; }
-  .card { padding: 17px 15px; }
-  .action-bar { margin-left: -15px; margin-right: -15px; padding: 13px 15px; }
-  .hero { padding: 16px 16px 16px 18px; }
-  .hero-title { font-size: 20px; }
-  .stat-num { font-size: 25px; }
-  .bar-row { grid-template-columns: 1fr auto; }
-  .bar-track { grid-column: 1 / -1; grid-row: 2; }
-  /* จอแคบ: ช่องค้นหากินเต็มบรรทัด แล้วตัวเรียงกับปุ่มลงมาอยู่บรรทัดถัดไป
-     ถ้าปล่อยให้ select หดอิสระ มันจะเหลือแค่ลูกศรจนกดไม่ถูก */
-  .list-toolbar .search { flex: 1 1 100%; }
-  .sort-select { flex: 1 1 150px; min-width: 150px; }
+  .person > summary { grid-template-columns: 32px 1fr; row-gap: var(--s2); }
+  .person > summary > :not(.person-num):not(.person-id) { grid-column: 2 / -1; }
+  .batch-item > summary { grid-template-columns: 1fr; row-gap: var(--s2); }
+  .reg-headrow { display: none; }
+
+  .rec { padding: var(--s4); }
+  .rec-head { grid-template-columns: 1fr; gap: var(--s3); }
+  .seal { text-align: left; }
+  .seal-no { font-size: 23px; display: inline; }
+  .seal-top { display: inline; margin-right: 7px; }
+  .seal-date { display: inline; margin-left: 7px; }
+  .verdict-cause { font-size: 22px; }
+  .lead-figure { padding: var(--s5) var(--s4); }
+  .lead-num { font-size: 68px; }
+  .step { grid-template-columns: 26px 1fr; }
+  .step-owner { grid-column: 2; justify-self: start; }
+  .step-text { grid-column: 2; }
+  .decision { grid-template-columns: 1fr; gap: var(--s2); }
+  .team-strip { grid-template-columns: 1fr; padding: var(--s4); }
+  .doc { padding: var(--s4); }
+  .ifield input { min-width: 0; }
+  .toast { left: var(--s4); right: var(--s4); transform: none; }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -747,142 +829,33 @@ code {
 }
 
 /* ============================================================
-   สั่งพิมพ์ — ให้ออกมาเป็นรายงานที่ยื่นให้คนอื่นอ่านได้
+   สั่งพิมพ์ — ตัดเงาและมุมมนออก กระดาษไม่ต้องการ
    ============================================================ */
 .print-head { display: none; }
 
 @media print {
-  @page { margin: 14mm; }
-  body { background: #fff; color: #000; font-size: 11pt; line-height: 1.6; }
+  @page { margin: 15mm; }
+  body { background: #fff; color: #000; font-size: 11pt; line-height: 1.75; }
+  .shell { display: block; padding: 0; }
+  .rail, .dropzone, .fold, .action-bar, .run-bar, .tools, .filter-chips,
+  .ph-acts, .btn, .toast, .check, .empty, .team-strip, .danger-zone, .gate { display: none !important; }
 
-  .topbar, .tabs, .dropzone, .meta-details, .action-bar, .list-toolbar,
-  .filter-chips, .card-head-actions, .btn, .toast, .check, .empty { display: none !important; }
-
+  * { box-shadow: none !important; border-radius: 0 !important; }
   .print-head {
     display: flex; justify-content: space-between; align-items: baseline;
-    border-bottom: 2px solid #000; padding-bottom: 7px; margin-bottom: 16px;
-    font-size: 12pt;
+    border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: var(--s4);
+    font-size: 12pt; font-weight: 700;
   }
-  .wrap { padding: 0; max-width: none; }
-  .grid-2 { display: block; }
-  .card {
-    border: none; box-shadow: none; padding: 0; margin: 0 0 14px;
-    background: none; break-inside: avoid;
-  }
+  .work { padding: 0; max-width: none; }
+  .two-col { display: block; }
+  .col-form { display: none; }
+  .rec, .doc, .lead-figure, .trend, .stat, .kpi, .person, .batch-item { padding: 0; background: none; }
+  .evidence, .alert, .step, .flag, .decision, .fields > div, .quote { background: none; border: 1px solid #999; }
   [data-panel][hidden] { display: none !important; }
-
-  .hero, .alert, .tile, .step, .factor, .person, .stat, .actions-list li, .flag {
-    break-inside: avoid; box-shadow: none;
-  }
-  .hero { background: none; border: 1px solid #ccc; }
-  .hero::before { background: #000; }
-  .more { border-top: 1px solid #ccc; }
-  .more > summary, .factor > summary { list-style: none; }
-  details:not([open]) > summary ~ * { display: none; }
+  .rec, .alert, .step, .factor, .person, .stat, .kpi, .flag, .decision, .theme-row { break-inside: avoid; }
+  /* บันทึกที่เปิดอยู่ต้องพิมพ์ครบ แม้ส่วนที่พับเก็บบนจอ */
+  .rec details > :not(summary) { content-visibility: visible !important; }
+  .more > summary { display: none; }
+  .demo-band { border: 1.5pt solid #000; background: none !important; color: #000 !important; }
   a[href]::after { content: ""; }
-}
-
-/* ---------- ตัวกรองช่วงวันที่ ---------- */
-/* ต้องเจาะจงกว่า input[type=date] ในกฎฟอร์มด้านบน ไม่งั้น width:100% จะชนะ
-   แล้วช่องวันที่จะกินเต็มบรรทัดจนแถบเครื่องมือสูงผิดปกติ */
-input.date-input { width: auto; min-width: 148px; flex: 0 1 auto; }
-.list-toolbar .muted { flex: none; }
-@media (max-width: 520px) {
-  input.date-input { flex: 1 1 130px; min-width: 130px; }
-}
-
-/* ============================================================
-   หน้าล็อกอิน (โหมดใช้งานร่วมกันทั้งทีม)
-   ============================================================ */
-.gate {
-  position: fixed; inset: 0; z-index: 200;
-  display: grid; place-items: center; padding: 24px; overflow: auto;
-  background:
-    radial-gradient(1100px 460px at 50% -8%, var(--brand-soft), transparent 70%),
-    var(--bg);
-}
-.gate-card {
-  width: 100%; max-width: 380px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 30px; box-shadow: var(--sh-3);
-  display: flex; flex-direction: column; gap: 15px;
-}
-.gate-card .brand { margin-bottom: 4px; }
-.gate-card .field { margin-bottom: 0; }
-.btn-block { width: 100%; }
-.gate-foot {
-  font-size: 11.5px; line-height: 1.7; color: var(--text-3);
-  text-align: center; margin-top: 2px;
-}
-
-/* ============================================================
-   แดชบอร์ดผู้บริหาร
-   ============================================================ */
-.kpi-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px; margin-bottom: 24px;
-}
-.kpi {
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: var(--r-sm); padding: 16px 17px;
-}
-.kpi-label { font-size: 12px; color: var(--text-2); }
-.kpi-row { display: flex; align-items: baseline; gap: 9px; margin-top: 6px; flex-wrap: wrap; }
-.kpi-num {
-  font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -.03em;
-  font-variant-numeric: tabular-nums;
-}
-.kpi-unit { font-size: 13px; color: var(--text-3); }
-.kpi-note { font-size: 11.5px; color: var(--text-3); margin-top: 7px; line-height: 1.5; }
-
-/* ลูกศรเทียบช่วงก่อนหน้า — การลาออกเพิ่มขึ้นคือข่าวร้าย สีจึงกลับด้านกับกราฟทั่วไป */
-.delta {
-  font-size: 11.5px; font-weight: 650; padding: 2px 8px; border-radius: 99px;
-  white-space: nowrap; font-variant-numeric: tabular-nums;
-}
-.delta-worse { background: var(--danger-soft); color: var(--danger); }
-.delta-better { background: var(--ok-soft); color: var(--ok); }
-.delta-same { background: var(--surface-3); color: var(--text-3); }
-
-/* ---- กราฟแนวโน้มรายเดือน ---- */
-.trend { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 16px; }
-.trend svg { display: block; width: 100%; height: auto; max-height: 260px; }
-.trend-scroll { min-width: 0; }
-.trend-scroll { overflow-x: auto; }
-.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; font-size: 12px; color: var(--text-2); }
-.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
-
-/* ---- ปัจจัยหลักพร้อมแนวโน้ม ---- */
-.theme-row {
-  display: grid; grid-template-columns: minmax(130px, 1.3fr) minmax(90px, 2fr) auto auto;
-  gap: 13px; align-items: center; font-size: 13.5px;
-  padding: 11px 0; border-bottom: 1px solid var(--border);
-}
-.theme-row:last-child { border-bottom: none; }
-.theme-name { font-weight: 550; }
-.theme-name em { display: block; font-style: normal; font-size: 11px; color: var(--text-3); font-weight: 400; }
-.theme-count { font-family: var(--mono); font-size: 12.5px; color: var(--text-2); white-space: nowrap; text-align: right; }
-@media (max-width: 640px) {
-  .theme-row { grid-template-columns: 1fr auto; row-gap: 7px; }
-  .theme-row .bar-track { grid-column: 1 / -1; }
-}
-
-/* ---- เรื่องที่ต้องตัดสินใจ ---- */
-.decision {
-  display: grid; grid-template-columns: auto 1fr; gap: 13px; align-items: start;
-  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-sm);
-  background: var(--surface-2); margin-bottom: 9px;
-}
-.decision-owner {
-  font-size: 11.5px; font-weight: 650; white-space: nowrap; padding: 3px 10px; border-radius: 99px;
-  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text-2);
-}
-.decision-high { border-color: var(--danger-line); background: var(--danger-soft); }
-.decision-high .decision-owner { color: var(--danger); border-color: var(--danger-line); background: var(--surface); }
-.decision-text { font-size: 14px; line-height: 1.75; }
-.decision-why { font-size: 12px; color: var(--text-2); margin-top: 4px; }
-
-@media print {
-  #execPeriod, #execBody .trend-scroll { break-inside: avoid; }
-  .kpi, .decision, .theme-row, .trend { break-inside: avoid; }
 }

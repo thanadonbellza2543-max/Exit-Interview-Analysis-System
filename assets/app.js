@@ -22,11 +22,12 @@
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+  /* cls = สีของค่าในช่องข้อมูล · tone = ป้ายในแถวทะเบียน */
   const SENTIMENT = {
-    positive: { th: "บวก", cls: "chip-ok" },
-    neutral: { th: "กลาง", cls: "" },
-    mixed: { th: "ผสม", cls: "chip-warn" },
-    negative: { th: "ลบ", cls: "chip-danger" },
+    positive: { th: "บวก", cls: "is-ok", tone: "t-pos" },
+    neutral: { th: "กลาง", cls: "", tone: "" },
+    mixed: { th: "ผสม", cls: "is-warn", tone: "t-mix" },
+    negative: { th: "ลบ", cls: "is-bad", tone: "t-neg" },
   };
   const YESNO = { yes: "ใช่", no: "ไม่", unclear: "ไม่ชัดเจน" };
   const URGENCY = { high: "เร่งด่วน", medium: "ปานกลาง", low: "เฝ้าระวัง" };
@@ -109,8 +110,8 @@
       — การวิเคราะห์และการส่งออกไฟล์ยังทำงานได้ครบ
       ถ้าต้องการเก็บประวัติ ให้เปิดผ่าน GitHub Pages หรือเซิร์ฟเวอร์ในเครื่อง`;
     $("#historyList").innerHTML = `<div class="notice notice-warn">${esc(msg)}</div>`;
-    $(".wrap").insertAdjacentHTML("afterbegin",
-      `<div class="notice notice-warn" style="margin-bottom:16px">${esc(msg)}</div>`);
+    $(".work").insertAdjacentHTML("afterbegin",
+      `<div class="notice notice-warn">${esc(msg)}</div>`);
   }
 
   /* ------------------------------------------------------------------ */
@@ -129,11 +130,11 @@
           <div class="lex-row">
             <div class="lex-head">
               <b>${esc(def.label)}</b>
-              <span class="chip">คำมาตรฐาน ${def.kw.length} คำ</span>
+              <span class="count-note">คำมาตรฐาน ${def.kw.length} คำ</span>
             </div>
             <details class="lex-default"><summary>ดูคำมาตรฐาน</summary><p>${esc(def.kw.join(", "))}</p></details>
             <input type="text" data-cat="${esc(k)}" class="lex-input"
-                   placeholder="เพิ่มคำของหน่วยงาน คั่นด้วย , เช่น ไลน์ 2, สถานี 4"
+                   placeholder="เพิ่มคำที่ใช้ในศูนย์นี้ คั่นด้วย , เช่น ช่องซ่อม 3, เคาน์เตอร์อะไหล่"
                    value="${esc((lexicon[k] || []).join(", "))}">
           </div>`;
       }).join("");
@@ -161,29 +162,51 @@
   /* แสดงผลวิเคราะห์                                                     */
   /* ------------------------------------------------------------------ */
 
-  /** จุด 5 ระดับ อ่านง่ายกว่าตัวเลขลอย ๆ และเทียบข้ามหมวดได้ทันที */
-  function dots(n) {
-    const lvl = n >= 4 ? "sev-high" : n === 3 ? "sev-mid" : "sev-low";
-    let out = `<span class="dots ${lvl}" title="ความรุนแรง ${n} จาก 5">`;
+  /** ระดับความรุนแรง -> ชื่อคลาสสี ใช้ร่วมกันทั้งมาตรวัดและแถบเทียบ */
+  const sevClass = (n) => (n >= 4 ? "sev-high" : n >= 3 ? "sev-mid" : "sev-low");
+
+  /** มาตรวัด 5 ขั้น สเกลเดียวทั้งระบบ อ่านง่ายกว่าตัวเลขลอย ๆ และเทียบข้ามหมวดได้ทันที */
+  function dots(n, large) {
+    const lvl = sevClass(n);
+    let out = `<span class="dots ${lvl}${large ? " dots-lg" : ""}" title="ความรุนแรง ${n} จาก 5">`;
     for (let i = 1; i <= 5; i++) out += `<i class="${i <= n ? "on" : ""}"></i>`;
     return out + "</span>";
   }
 
   const VERDICT = {
     would_return: {
-      yes: { txt: "ยินดีกลับมา", cls: "tile-ok", sub: "เก็บไว้ในทะเบียนจ้างกลับ" },
-      no: { txt: "ไม่กลับแล้ว", cls: "tile-danger", sub: "" },
-      unclear: { txt: "ไม่ได้พูดถึง", cls: "", sub: "" },
+      yes: { txt: "ยินดีกลับมา", cls: "is-ok" },
+      no: { txt: "ไม่กลับแล้ว", cls: "is-bad" },
+      unclear: { txt: "ไม่ได้พูดถึง", cls: "" },
     },
     would_recommend: {
-      yes: { txt: "ยังแนะนำองค์กร", cls: "tile-ok", sub: "" },
-      no: { txt: "ไม่แนะนำองค์กร", cls: "tile-danger", sub: "กระทบภาพลักษณ์การจ้างงาน" },
-      unclear: { txt: "ไม่ได้พูดถึง", cls: "", sub: "" },
+      yes: { txt: "ยังแนะนำองค์กร", cls: "is-ok" },
+      no: { txt: "ไม่แนะนำองค์กร", cls: "is-bad" },
+      unclear: { txt: "ไม่ได้พูดถึง", cls: "" },
     },
   };
 
-  function renderSummary(s, meta) {
+  /* หัวคอลัมน์ของทะเบียน ใช้กริดชุดเดียวกับแถว คอลัมน์จึงอยู่ตำแหน่งเดิมทุกแถวทุกมุมมอง */
+  const REG_HEAD_PERSON = `<div class="reg-headrow reg-headrow-person" aria-hidden="true">
+    <span>ลำดับ</span><span>ผู้ให้สัมภาษณ์</span><span>เหตุผลหลัก</span><span>ระดับ</span><span>ธง · น้ำเสียง</span>
+  </div>`;
+  const REG_HEAD_RECORD = `<div class="reg-headrow reg-headrow-record" aria-hidden="true">
+    <span>ผู้ให้สัมภาษณ์</span><span>ประเด็นหลัก</span><span>ระดับ</span><span>ธง · น้ำเสียง</span><span>ลงทะเบียน</span>
+  </div>`;
+
+  /** ตัวเลขล้วนแบบ dd.mm.yyyy (พ.ศ.) เพราะช่องที่ใช้วันที่เป็นฟอนต์ตัวเลข */
+  const shortDate = (v) => {
+    if (!v) return "";
+    const d = new Date(v);
+    if (isNaN(d)) return String(v);
+    const p2 = (n) => String(n).padStart(2, "0");
+    return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear() + 543}`;
+  };
+
+  /** บันทึกหนึ่งฉบับ: ตราประทับ ชื่อ เหตุผลหลักพร้อมหลักฐาน ช่องข้อมูล และคำเตือนปิดท้าย */
+  function renderSummary(s, meta, rec) {
     meta = meta || {};
+    rec = rec || {};
     const cats = s.reason_categories || [];
     const top = cats[0];
     const rest = cats.slice(1);
@@ -191,37 +214,51 @@
     const urgent = risks.filter((f) => f.urgency === "high");
     const later = risks.filter((f) => f.urgency !== "high");
     const sent = SENTIMENT[s.sentiment && s.sentiment.overall] || SENTIMENT.neutral;
-    const sub = [meta.employee_code, meta.department, meta.position, meta.tenure,
+    const sub = [meta.employee_code, meta.department, meta.position,
+      meta.tenure ? "อายุงาน " + meta.tenure : null,
       meta.interviewer ? "ผู้สัมภาษณ์ " + meta.interviewer : null].filter(Boolean);
+    const sealDate = shortDate(meta.interview_date || rec.at) || "—";
 
-    const tile = (label, key) => {
+    const field = (label, key) => {
       const v = VERDICT[key][s[key]] || VERDICT[key].unclear;
-      return `<div class="tile ${v.cls}">
-        <div class="tile-label">${esc(label)}</div>
-        <div class="tile-value">${esc(v.txt)}</div>
-        ${v.sub ? `<div class="tile-sub">${esc(v.sub)}</div>` : ""}
-      </div>`;
+      return `<div><dt>${esc(label)}</dt><dd class="${v.cls}">${esc(v.txt)}</dd></div>`;
     };
 
     return `
-      <div class="res-head">
-        <div class="res-name">${esc(meta.employee_name || "ผลวิเคราะห์ Exit Interview")}</div>
-        ${sub.length ? `<div class="res-sub">${esc(sub.join(" · "))}</div>` : ""}
-      </div>
+      <div class="rec">
+        ${meta.demo ? `<p class="demo-band">
+          <svg class="ic ic-sm"><use href="#i-info"/></svg>ข้อมูลตัวอย่าง — แต่งขึ้นเพื่อสาธิต ไม่ใช่พนักงานจริง
+        </p>` : ""}
+
+        <div class="rec-head">
+          <div>
+            <div class="rec-name">${esc(meta.employee_name || "ไม่ระบุชื่อผู้ให้สัมภาษณ์")}</div>
+            ${sub.length ? `<div class="rec-sub">${esc(sub.join(" · "))}</div>` : ""}
+          </div>
+          <div class="seal">
+            ${rec.no
+              ? `<span class="seal-top">บันทึกเลขที่</span>
+                 <span class="seal-no">${String(rec.no).padStart(3, "0")}</span>`
+              : `<span class="seal-top">ยังไม่ได้ลงทะเบียน</span>`}
+            <span class="seal-date">${esc(sealDate)}</span>
+          </div>
+        </div>
 
       ${top ? `
-      <div class="hero">
-        <div class="hero-label">เหตุผลหลัก</div>
-        <div class="hero-title">${esc(top.label)}</div>
-        <div class="hero-meta">${dots(top.severity)}<span>ความรุนแรง ${esc(top.severity)} จาก 5</span></div>
-        ${top.evidence ? `<blockquote class="hero-quote">${esc(top.evidence)}</blockquote>` : ""}
+      <div class="verdict">
+        <div class="verdict-cause">${esc(top.label)}</div>
+        <div class="verdict-meter">${dots(top.severity, true)}<span>ความรุนแรง ${esc(top.severity)} จาก 5</span></div>
+        ${top.evidence ? `<blockquote class="evidence">${esc(top.evidence)}</blockquote>` : ""}
       </div>` : `
       <div class="notice notice-warn">ไม่พบคำสำคัญที่ตรงกับหมวดใดเลย — ต้องอ่านบทสัมภาษณ์ต้นฉบับเอง
-      หรือเพิ่มคำเฉพาะขององค์กรในแท็บ “คำสำคัญ”</div>`}
+      หรือเพิ่มคำเฉพาะของศูนย์ในแท็บ “คำสำคัญ”</div>`}
 
       ${urgent.length ? `
       <div class="alert">
-        <div class="alert-head">🚩 ต้องตรวจสอบข้อเท็จจริงก่อนปิดเคส (${urgent.length})</div>
+        <div class="alert-head">
+          <svg class="ic ic-sm"><use href="#i-flag"/></svg>
+          ต้องสอบข้อเท็จจริงก่อนปิดเรื่อง (${urgent.length})
+        </div>
         ${urgent.map((f) => `
           <div class="alert-item">
             <b>${esc(f.label)}</b>
@@ -230,14 +267,11 @@
         <div class="alert-foot">ระบบตรวจจากคำสำคัญเท่านั้น ยังไม่ใช่ข้อสรุป — HR ต้องสอบกับคนจริงก่อนเสมอ</div>
       </div>` : ""}
 
-      <div class="tiles">
-        <div class="tile ${sent.cls === "chip-danger" ? "tile-danger" : sent.cls === "chip-warn" ? "tile-warn" : sent.cls === "chip-ok" ? "tile-ok" : ""}">
-          <div class="tile-label">น้ำเสียงโดยรวม</div>
-          <div class="tile-value">${esc(sent.th)}</div>
-        </div>
-        ${tile("กลับมาทำงานอีกไหม", "would_return")}
-        ${tile("ยังแนะนำองค์กรไหม", "would_recommend")}
-      </div>
+      <dl class="fields">
+        <div><dt>น้ำเสียงโดยรวม</dt><dd class="${sent.cls}">${esc(sent.th)}</dd></div>
+        ${field("กลับมาทำงานอีกไหม", "would_return")}
+        ${field("ยังแนะนำองค์กรไหม", "would_recommend")}
+      </dl>
 
       ${rest.length ? `
       <div class="res-block">
@@ -294,7 +328,7 @@
             <h3>ประเด็นเฝ้าระวังระดับรอง</h3>
             ${later.map((f) => `
               <div class="flag ${f.urgency === "medium" ? "flag-med" : "flag-low"}">
-                <span>⚑</span>
+                <svg class="ic ic-sm"><use href="#i-flag"/></svg>
                 <span><b>${esc(f.label)} · ${esc(URGENCY[f.urgency] || f.urgency)}</b>${esc(f.detail)}</span>
               </div>`).join("")}
           </div>` : ""}
@@ -316,12 +350,36 @@
           ${s.data_quality && s.data_quality.note ? " · " + esc(s.data_quality.note) : ""}</p>
         </div>
       </details>
+
+      <dl class="rec-sign">
+        <div>
+          <span>ผู้สัมภาษณ์</span>
+          <b>${esc(meta.interviewer || "—")}</b>
+        </div>
+        <div>
+          <span>ผู้บันทึกเข้าทะเบียน</span>
+          <b>${esc(meta.analyst || "—")}</b>
+        </div>
+        <div>
+          <span>วันทำงานวันสุดท้าย</span>
+          <b>${esc(shortDate(meta.last_day) || "—")}</b>
+        </div>
+      </dl>
+
+      <p class="rec-warn">
+        <svg class="ic ic-sm"><use href="#i-info"/></svg>
+        <span>บันทึกนี้สรุปด้วยการจับคำสำคัญอัตโนมัติ ไม่ใช่การตีความของมนุษย์
+        และยังไม่ใช่ข้อสรุปทางวินัยหรือข้อเท็จจริงที่ยืนยันแล้ว —
+        ต้องอ่านบทสัมภาษณ์ต้นฉบับยืนยันก่อนนำไปใช้ตัดสินใจเรื่องบุคคลทุกครั้ง</span>
+      </p>
+      </div>
     `;
   }
 
   function summaryToText(s, meta) {
     meta = meta || {};
     const L = ["สรุป Exit Interview"];
+    if (meta.demo) L.push("*** ข้อมูลตัวอย่าง แต่งขึ้นเพื่อสาธิต ไม่ใช่พนักงานจริง ***");
     if (meta.employee_name) L.push("พนักงาน: " + meta.employee_name);
     if (meta.department) L.push("แผนก: " + meta.department);
     if (meta.position) L.push("ตำแหน่ง: " + meta.position);
@@ -452,7 +510,7 @@
     const items = [{ key: "all", label: "ทั้งหมด", n: history.length }];
     const risk = history.filter(hasHighRisk).length;
     const prev = history.filter((r) => r.summary.preventable === "yes").length;
-    if (risk) items.push({ key: "risk", label: "🚩 มีธงแดง", n: risk });
+    if (risk) items.push({ key: "risk", label: "มีธงเฝ้าระวัง", n: risk });
     if (prev) items.push({ key: "preventable", label: "รั้งไว้ได้", n: prev });
 
     Object.keys(analysts).sort((a, b) => analysts[b] - analysts[a]).slice(0, 6)
@@ -488,27 +546,38 @@
     /* ---- รายการ ---- */
     if (!rows.length) {
       const filtering = histState.q || histState.from || histState.to || histState.filter !== "all";
-      $("#historyList").innerHTML = `<div class="empty"><span class="empty-icon">🗂️</span>
-        <p>${filtering ? "ไม่มีรายการตรงกับเงื่อนไข" : "ยังไม่มีประวัติ"}</p>
-        <small>${filtering ? "ลองกดล้างตัวกรอง" : "ผลที่ติ๊ก “บันทึกลงประวัติ” จะมาอยู่ตรงนี้"}</small></div>`;
+      $("#historyList").innerHTML = `<div class="empty">
+        <svg class="ic ic-xl"><use href="#i-archive"/></svg>
+        <p>${filtering ? "ไม่มีบันทึกตรงกับเงื่อนไข" : "ทะเบียนยังว่าง"}</p>
+        <small>${filtering ? "ลองกดล้างตัวกรอง" : "ผลที่ติ๊ก “ลงทะเบียน” จะมาอยู่ตรงนี้"}</small></div>`;
       return;
     }
 
-    $("#historyList").innerHTML = rows.map((r) => {
+    /* เลขทะเบียนนับจากฉบับแรกสุด จึงไม่เปลี่ยนเมื่อมีบันทึกใหม่เข้ามา */
+    $("#historyList").innerHTML = REG_HEAD_RECORD + rows.map((r) => {
       const s2 = r.summary, sent = SENTIMENT[s2.sentiment.overall] || SENTIMENT.neutral;
       const risks = (s2.risk_flags || []).filter((f) => f.urgency === "high").length;
+      const top = (s2.reason_categories || [])[0];
+      const no = history.length - history.indexOf(r);
+      const sub = [r.meta.department, r.meta.analyst ? "บันทึกโดย " + r.meta.analyst : null]
+        .filter(Boolean).join(" · ");
       return `
         <details class="batch-item">
           <summary>
-            <strong>${esc(r.meta.employee_name || "ไม่ระบุชื่อ")}</strong>
-            <span class="chip ${sent.cls}">${esc(sent.th)}</span>
-            ${risks ? `<span class="badge-flag">🚩 ${risks}</span>` : ""}
-            ${r.meta.department ? `<span class="muted">${esc(r.meta.department)}</span>` : ""}
-            <span class="muted">${new Date(r.at).toLocaleDateString("th-TH", { dateStyle: "medium" })}</span>
-            ${r.meta.analyst ? `<span class="muted">· โดย ${esc(r.meta.analyst)}</span>` : ""}
-            <span class="muted">— ${esc(s2.headline)}</span>
+            <span class="person-id">
+              <b>${esc(r.meta.employee_name || "ไม่ระบุชื่อ")}</b>
+              ${sub ? `<em>${esc(sub)}</em>` : ""}
+            </span>
+            <span class="person-reason">${esc(s2.headline)}</span>
+            ${top ? dots(top.severity) : "<span></span>"}
+            <span class="person-badges">
+              ${r.meta.demo ? `<span class="demo-tag" title="ข้อมูลตัวอย่าง แต่งขึ้นเพื่อสาธิต">ตัวอย่าง</span>` : ""}
+              ${risks ? `<span class="badge-flag"><svg class="ic ic-sm"><use href="#i-flag"/></svg>${risks}</span>` : ""}
+              <span class="badge-tone ${sent.tone}">${esc(sent.th)}</span>
+            </span>
+            <span class="muted">${esc(shortDate(r.at))}</span>
           </summary>
-          <div class="batch-body">${renderSummary(s2, r.meta)}</div>
+          <div class="batch-body">${renderSummary(s2, r.meta, { no, at: r.at })}</div>
         </details>`;
     }).join("");
   }
@@ -614,6 +683,8 @@
 
   const rawText = $("#rawText");
   let lastSingle = null;
+  /* บันทึกที่มาจากข้อมูลสาธิตต้องถูกกำกับไว้ทุกที่ ไม่งั้นพิมพ์ออกมาแล้วแยกจากของจริงไม่ออก */
+  let demoData = false;
 
   rawText.addEventListener("input", () => {
     $("#charCount").textContent = rawText.value.length.toLocaleString("th-TH") + " ตัวอักษร";
@@ -632,27 +703,59 @@
       position: $("#m_pos").value.trim() || null,
       tenure: $("#m_tenure").value.trim() || null,
       last_day: $("#m_lastday").value || null,
+      demo: demoData || undefined,
     };
+  }
+
+  /** ข้อความผิดพลาดต้องอยู่ติดช่องที่ผิด ไม่ใช่ลอยอยู่ก้นจอให้ตามหา */
+  function setFieldError(msg) {
+    const box = $("#rawTextError");
+    box.textContent = msg || "";
+    box.hidden = !msg;
+    if (msg) rawText.focus();
+  }
+  rawText.addEventListener("input", () => { if (!$("#rawTextError").hidden) setFieldError(""); });
+
+  /** ปุ่มที่กำลังทำงานต้องกดซ้ำไม่ได้ และต้องบอกว่ากำลังทำอะไรอยู่ */
+  async function withBusy(btn, label, job) {
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = esc(label);
+    // ยอมคืนคิวให้เบราว์เซอร์วาดสถานะก่อนเริ่มงานหนัก
+    // ใช้ setTimeout ไม่ใช่ requestAnimationFrame เพราะ rAF ถูกหยุดเมื่อแท็บไม่ได้อยู่หน้าจอ
+    // ถ้าพึ่ง rAF ปุ่มจะค้างอยู่สถานะ disabled ตลอดไปเมื่อผู้ใช้สลับแท็บระหว่างรอ
+    await new Promise((r) => setTimeout(r, 0));
+    try { await job(); }
+    finally { btn.disabled = false; btn.innerHTML = original; }
   }
 
   $("#runSingle").addEventListener("click", async () => {
     const text = rawText.value.trim();
-    if (text.length < 30) return toast("กรุณาใส่ข้อความบทสัมภาษณ์ให้ยาวกว่านี้");
-
-    const meta = metaFromForm();
-    const summary = E.analyze(text, meta, getLexicon());
-    lastSingle = { meta, summary, at: new Date().toISOString(), source: "single", raw_text: text };
-
-    $("#singleOut").innerHTML = renderSummary(summary, meta);
-    $("#singleActions").hidden = false;
-
-    if ($("#saveHistory").checked) {
-      const res = await addHistory([lastSingle]);
-      toast(res.added ? "วิเคราะห์เสร็จ และบันทึกแล้ว"
-                      : "วิเคราะห์เสร็จ — รายการนี้มีอยู่แล้ว จึงไม่บันทึกซ้ำ");
-    } else {
-      toast("วิเคราะห์เสร็จแล้ว");
+    if (text.length < 30) {
+      return setFieldError("ข้อความสั้นเกินไป — ต้องมีอย่างน้อย 30 ตัวอักษร ตอนนี้มี "
+        + text.length.toLocaleString("th-TH") + " ตัวอักษร");
     }
+    setFieldError("");
+
+    await withBusy($("#runSingle"), "กำลังวิเคราะห์…", async () => {
+      const meta = metaFromForm();
+      const summary = E.analyze(text, meta, getLexicon());
+      lastSingle = { meta, summary, at: new Date().toISOString(), source: "single", raw_text: text };
+
+      /* บันทึกที่เพิ่งออกยังไม่มีเลขทะเบียน แต่มีวันที่เสมอ คือวันที่ออกบันทึก */
+      $("#singleOut").innerHTML = renderSummary(summary, meta, { at: lastSingle.at });
+      $("#singleActions").hidden = false;
+
+      if ($("#saveHistory").checked) {
+        const res = await addHistory([lastSingle]);
+        toast(res.added ? "วิเคราะห์เสร็จ และลงทะเบียนแล้ว"
+                        : "วิเคราะห์เสร็จ — รายการนี้มีอยู่แล้ว จึงไม่บันทึกซ้ำ");
+      } else {
+        toast("วิเคราะห์เสร็จแล้ว");
+      }
+      // พาสายตาไปที่ผลลัพธ์ เพราะบนจอแคบผลจะอยู่ใต้ฟอร์มที่ยาวมาก
+      $("#singleOut").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
   });
 
   $("#clearSingle").onclick = () => {
@@ -660,8 +763,11 @@
     rawText.dispatchEvent(new Event("input"));
     ["m_name", "m_code", "m_dept", "m_pos", "m_tenure", "m_lastday"].forEach((id) => { $("#" + id).value = ""; });
     importedMeta = null;
-    $("#singleOut").innerHTML = `<div class="empty"><span class="empty-icon">📋</span>
-      <p>ยังไม่มีผลวิเคราะห์</p><small>ใส่ข้อความทางซ้าย แล้วกด “วิเคราะห์”</small></div>`;
+    demoData = false;
+    setFieldError("");
+    $("#singleOut").innerHTML = `<div class="empty">
+      <svg class="ic ic-xl"><use href="#i-record"/></svg>
+      <p>ยังไม่มีบันทึกในแผ่นนี้</p><small>ลงบทสัมภาษณ์ทางซ้าย แล้วกด “ออกบันทึก”</small></div>`;
     $("#singleActions").hidden = true;
     lastSingle = null;
   };
@@ -730,6 +836,7 @@
           return toast("ฟอร์มนี้ยังไม่ได้กรอกคำตอบ");
         }
         importedMeta = form.meta;
+        demoData = false;
         rawText.value = form.text;
         applyMeta(form.meta);
         rawText.dispatchEvent(new Event("input"));
@@ -737,6 +844,7 @@
       }
 
       importedMeta = null;
+      demoData = false;
       rawText.value = await file.text();
       rawText.dispatchEvent(new Event("input"));
       toast("อ่านไฟล์ " + file.name + " แล้ว");
@@ -790,6 +898,7 @@
   /* ------------------------------------------------------------------ */
 
   let batchRows = [], batchHeaders = [], batchResults = [], batchAgg = null;
+  let batchDemo = false;   // ตารางที่โหลดมาเป็นชุดตัวอย่างที่แถมมากับระบบหรือไม่
 
   if (typeof XLSX === "undefined") {
     $("#xlsxNote").innerHTML = '<span class="muted">(.xlsx ต้องต่อเน็ตครั้งแรก — ตอนนี้ใช้ได้เฉพาะ CSV กรุณา Save As เป็น CSV UTF-8)</span>';
@@ -927,6 +1036,7 @@
     if (tables.length > 1) toast(`ไฟล์ตารางรองรับทีละไฟล์ — ใช้ ${table.name}`);
 
     batchRows = table.rows;
+    batchDemo = /^sample-data\.csv$/i.test(table.name);
     batchHeaders = Object.keys(table.rows[0]);
     buildColumnPickers();
     $("#batchMap").hidden = false;
@@ -968,7 +1078,10 @@
   $("#runForms").addEventListener("click", async () => {
     const usable = formFiles.filter((f) => f.text.length >= 40);
     if (!usable.length) return toast("ไม่มีฟอร์มที่มีคำตอบให้วิเคราะห์");
+    await withBusy($("#runForms"), `กำลังวิเคราะห์ ${usable.length} ไฟล์…`, () => runFormsJob(usable));
+  });
 
+  async function runFormsJob(usable) {
     const lex = getLexicon();
     const at = new Date().toISOString();
     batchResults = usable.map((f) => {
@@ -981,7 +1094,8 @@
     $("#batchResult").hidden = false;
     if ($("#formSaveHistory").checked) await addHistory(batchResults.slice());
     toast(`วิเคราะห์ ${usable.length} ไฟล์เสร็จแล้ว`);
-  });
+    $("#batchResult").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 
   function buildColumnPickers() {
     const guess = function () {
@@ -1005,6 +1119,10 @@
   }
 
   $("#runBatch").addEventListener("click", async () => {
+    await withBusy($("#runBatch"), "กำลังวิเคราะห์…", runBatchJob);
+  });
+
+  async function runBatchJob() {
     const colText = $("#col_text").value;
     const pick = (row, id) => { const c = $("#" + id).value; return c ? (String(row[c] || "").trim() || null) : null; };
 
@@ -1016,6 +1134,7 @@
         department: pick(row, "col_dept"),
         position: pick(row, "col_pos"),
         tenure: pick(row, "col_tenure"),
+        demo: batchDemo || undefined,
       },
     })).filter((j) => j.text.length >= 20);
 
@@ -1035,7 +1154,8 @@
 
     if ($("#batchSaveHistory").checked) await addHistory(batchResults.slice());
     toast(`วิเคราะห์ ${jobs.length} คนเสร็จแล้ว` + (skipped ? ` (ข้าม ${skipped} แถวที่เนื้อหาสั้นเกินไป)` : ""));
-  });
+    $("#batchResult").scrollIntoView({ block: "start", behavior: "smooth" });
+  }
 
   /** สร้าง HTML แดชบอร์ดจากผลชุดใดก็ได้ — ใช้ทั้งกับไฟล์ที่เพิ่งอัปโหลด
       และกับประวัติสะสมของทั้งทีมในแท็บประวัติ */
@@ -1066,7 +1186,7 @@
           ${a.themes.map((t) => `
             <div class="bar-row">
               <span>${esc(t.theme)}</span>
-              <span class="bar-track"><span class="bar-fill" style="width:${(t.affected / maxTheme) * 100}%"></span></span>
+              <span class="bar-track"><span class="bar-fill ${sevClass(t.avgSeverity || 0)}" style="width:${(t.affected / maxTheme) * 100}%"></span></span>
               <span class="bar-val">${t.affected} คน</span>
             </div>
             <div class="quote">${esc(t.detail)}</div>
@@ -1081,7 +1201,7 @@
           <table class="dept-table">
             <thead><tr>
               <th>หน่วยงาน</th><th>ประเด็นเด่น</th>
-              <th class="num">ลาออก</th><th class="num">น้ำเสียงลบ</th><th class="num">ธงแดง</th>
+              <th class="num">ลาออก</th><th class="num">น้ำเสียงลบ</th><th class="num">ธงเฝ้าระวัง</th>
             </tr></thead>
             <tbody>
               ${a.departments.map((d) => `
@@ -1102,7 +1222,7 @@
         <h3>ประเด็นเร่งด่วนรวมทุกคน <em class="warn-note">ต้องสอบข้อเท็จจริงก่อนดำเนินการ</em></h3>
         ${allRisks.map((x) => `
           <div class="flag">
-            <span>⚑</span>
+            <svg class="ic ic-sm"><use href="#i-flag"/></svg>
             <span><b>${esc(x.f.label)} · ${esc(x.who)}</b>${esc(x.f.detail)}</span>
           </div>`).join("")}
       </div>` : ""}
@@ -1110,11 +1230,13 @@
       ${a.recommendations.length ? `
       <div class="res-block">
         <h3>ข้อเสนอแนะระดับองค์กร</h3>
-        <ul class="actions-list">
+        <ol class="steps">
           ${a.recommendations.map((r) => `
-            <li><span class="chip ${r.priority === "high" ? "chip-danger" : "chip-warn"}">${esc(OWNERS[r.owner] || r.owner)}</span>
-            <span>${esc(r.action)}</span></li>`).join("")}
-        </ul>
+            <li class="step ${r.priority === "high" ? "step-high" : ""}">
+              <span class="step-owner">${esc(OWNERS[r.owner] || r.owner)}</span>
+              <span class="step-text">${esc(r.action)}</span>
+            </li>`).join("")}
+        </ol>
       </div>` : ""}
     `;
   }
@@ -1151,7 +1273,7 @@
     });
 
     const items = [{ key: "all", label: "ทั้งหมด", n: batchResults.length }];
-    if (withRisk) items.push({ key: "risk", label: "🚩 มีธงแดง", n: withRisk });
+    if (withRisk) items.push({ key: "risk", label: "มีธงเฝ้าระวัง", n: withRisk });
     if (prevent) items.push({ key: "preventable", label: "รั้งไว้ได้", n: prevent });
     if (negative) items.push({ key: "negative", label: "น้ำเสียงลบ / ผสม", n: negative });
     Object.keys(depts)
@@ -1196,12 +1318,13 @@
       : `แสดง ${rows.length} จาก ${batchResults.length} คน`;
 
     if (!rows.length) {
-      $("#batchList").innerHTML = `<div class="empty"><span class="empty-icon">🔍</span>
+      $("#batchList").innerHTML = `<div class="empty">
+        <svg class="ic ic-xl"><use href="#i-search"/></svg>
         <p>ไม่มีใครตรงกับเงื่อนไขนี้</p><small>ลองล้างคำค้นหรือกดตัวกรอง “ทั้งหมด”</small></div>`;
       return;
     }
 
-    $("#batchList").innerHTML = rows.map((x, n) => {
+    $("#batchList").innerHTML = REG_HEAD_PERSON + rows.map((x, n) => {
       const s = x.r.summary, m = x.r.meta;
       const sent = SENTIMENT[s.sentiment.overall] || SENTIMENT.neutral;
       const sub = [m.department, m.position].filter(Boolean).join(" · ");
@@ -1214,13 +1337,14 @@
               ${sub ? `<em>${esc(sub)}</em>` : ""}
             </span>
             <span class="person-reason">${esc(x.top ? x.top.label : "ไม่พบประเด็นเด่น")}</span>
+            ${x.top ? dots(x.top.severity) : "<span></span>"}
             <span class="person-badges">
-              ${x.top ? dots(x.top.severity) : ""}
-              ${x.risks ? `<span class="badge-flag">🚩 ${x.risks}</span>` : ""}
-              <span class="chip ${sent.cls}">${esc(sent.th)}</span>
+              ${m.demo ? `<span class="demo-tag" title="ข้อมูลตัวอย่าง แต่งขึ้นเพื่อสาธิต">ตัวอย่าง</span>` : ""}
+              ${x.risks ? `<span class="badge-flag"><svg class="ic ic-sm"><use href="#i-flag"/></svg>${x.risks}</span>` : ""}
+              <span class="badge-tone ${sent.tone}">${esc(sent.th)}</span>
             </span>
           </summary>
-          <div class="batch-body">${renderSummary(s, m)}</div>
+          <div class="batch-body">${renderSummary(s, m, { no: n + 1, at: x.r.at })}</div>
         </details>`;
     }).join("");
   }
@@ -1286,29 +1410,33 @@
 
   $("#fillSample").onclick = () => {
     $("#m_name").value = "สมชาย ใจดี";
-    $("#m_code").value = "TMT-48213";
-    $("#m_dept").value = "Assembly Shop — Line 2";
-    $("#m_pos").value = "Team Leader";
+    $("#m_code").value = "TSC-1420";
+    $("#m_dept").value = "ศูนย์บริการ — ช่างซ่อมทั่วไป";
+    $("#m_pos").value = "หัวหน้าช่าง";
     $("#m_tenure").value = "6 ปี 2 เดือน";
     rawText.value = `ถาม: อะไรคือเหตุผลหลักที่ตัดสินใจลาออกครับ
-ตอบ: หลัก ๆ คือเรื่องความก้าวหน้าครับ ผมอยู่ตำแหน่ง TL มา 4 ปีแล้ว เห็นรุ่นน้องที่เข้าทีหลังได้ขึ้น GL ไปสองคน ผมถามหัวหน้าเรื่องเส้นทางอาชีพหลายรอบ ก็ได้คำตอบว่ารอไปก่อนทุกครั้ง ไม่เคยมีแผนที่ชัดเจน
+ตอบ: หลัก ๆ คือเรื่องความก้าวหน้าครับ ผมเป็นหัวหน้าช่างมา 4 ปีแล้ว เห็นน้องที่เข้าทีหลังได้ขึ้นเป็นหัวหน้าแผนกไปสองคน ผมถามผู้จัดการศูนย์เรื่องเส้นทางอาชีพหลายรอบ ก็ได้คำตอบว่ารอไปก่อนทุกครั้ง ไม่เคยมีแผนที่ชัดเจน
 
 ถาม: เรื่องค่าตอบแทนล่ะครับ
-ตอบ: เงินเดือนถือว่าโอเคเมื่อเทียบกับที่อื่นในนิคม แต่ปีที่แล้วโบนัสลดลงเยอะ แล้วก็ไม่มีใครอธิบายเหตุผลให้ฟัง ที่ใหม่ให้เพิ่มประมาณ 15 เปอร์เซ็นต์ แต่ถ้าเรื่องความก้าวหน้าชัดเจน ผมก็อาจจะยังอยู่
+ตอบ: เงินเดือนพอใช้ครับ แต่ค่าคอมมิชชั่นงานซ่อมถูกปรับเกณฑ์ใหม่ปีที่แล้วแล้วรายได้รวมลดลงเยอะ ไม่มีใครอธิบายเกณฑ์ใหม่ให้ฟังเลย ที่ใหม่เป็นศูนย์บริการอีกยี่ห้อ ให้เพิ่มประมาณ 15 เปอร์เซ็นต์ แต่ถ้าเรื่องความก้าวหน้าชัดเจน ผมก็อาจจะยังอยู่
 
-ถาม: เรื่องภาระงานและ OT
-ตอบ: ช่วงที่ยอดผลิตขึ้น เราทำ OT กันเกือบทุกวัน บางสัปดาห์ 6 วัน ปัญหาคือกำลังคนไม่พอมาสองปีแล้ว คนออกไปแล้วไม่เติม ทีมผมเหลือ 11 คนจาก 15 คน งานเท่าเดิม สุดท้ายพวกที่อยู่ก็เหนื่อยแล้วก็ทยอยออกตามกัน
+ถาม: เรื่องภาระงานและเวลาทำงาน
+ตอบ: ช่วงปลายเดือนกับช่วงโปรโมชันเช็กระยะ คิวจองเข้ามาเยอะมาก เราอยู่เกินเวลากันแทบทุกวัน ปัญหาคือช่างไม่พอมาสองปีแล้ว คนออกไปแล้วไม่รับเพิ่ม ทีมผมเหลือ 6 คนจาก 9 คน แต่เป้าจำนวนคันต่อวันเท่าเดิม สุดท้ายคนที่อยู่ก็เหนื่อยแล้วทยอยออกตามกัน
 
 ถาม: เรื่องหัวหน้างานและการสื่อสาร
-ตอบ: หัวหน้าโดยตรงเป็นคนดีนะครับ แต่เขาไม่มีอำนาจตัดสินใจอะไร ทุกอย่างต้องรอข้างบน บางเรื่องเสนอไปเป็นเดือนก็เงียบ ผมเคยเสนอปรับ layout จุดวางชิ้นส่วนที่ station 4 เพราะพนักงานต้องเอี้ยวตัวหยิบตลอด ปวดหลังกันหลายคน เรื่องนี้ผมเสนอตั้งแต่ปีที่แล้ว ยังไม่มีอะไรเกิดขึ้น
+ตอบ: ผู้จัดการเป็นคนดีนะครับ แต่เขาไม่มีอำนาจตัดสินใจอะไร ทุกอย่างต้องรอสำนักงานใหญ่ บางเรื่องเสนอไปเป็นเดือนก็เงียบ ผมเคยเสนอให้ย้ายชั้นวางอะไหล่มาใกล้ช่องซ่อมที่ 3 เพราะช่างต้องเดินไปหยิบของทั้งวัน เสียเวลาแล้วก็ปวดหลังกันหลายคน เรื่องนี้ผมเสนอตั้งแต่ปีที่แล้ว ยังไม่มีอะไรเกิดขึ้น
+
+ถาม: เรื่องลูกค้าและคุณภาพงาน
+ตอบ: มีอยู่ช่วงที่ผมถูกกดดันให้ปิดงานให้ทันคิว ทั้งที่งานยังไม่เรียบร้อยดี ผมไม่สบายใจเพราะคะแนน VDQI กับคำร้องเรียนลูกค้าจะมาลงที่ช่างอยู่ดี
 
 ถาม: มีอะไรที่ประทับใจไหมครับ
-ตอบ: เพื่อนร่วมงานดีมากครับ ทีมช่วยเหลือกันดี แล้วก็ระบบ training ตอนเข้าใหม่ดีจริง ๆ ผมได้ความรู้เรื่อง TPS เยอะมาก อันนี้ต้องยอมรับว่าที่นี่สอนดี
+ตอบ: เพื่อนร่วมงานดีมากครับ ทีมช่วยเหลือกันดี แล้วก็การส่งไปอบรมเทคนิคของโตโยต้าดีจริง ๆ ผมได้ใบรับรองระดับสูงขึ้นมาสองใบ อันนี้ต้องยอมรับว่าที่นี่ให้โอกาสเรียนเยอะ
 
 ถาม: ถ้ามีโอกาสจะกลับมาทำงานที่นี่อีกไหม
 ตอบ: ถ้าเรื่องเส้นทางอาชีพชัดเจนกว่านี้ก็อาจจะกลับมาครับ ผมก็ยังแนะนำเพื่อนให้มาสมัครอยู่นะ แต่จะบอกตามตรงว่าอย่าหวังเรื่องโปรโมทเร็ว`;
+    demoData = true;
     rawText.dispatchEvent(new Event("input"));
-    toast("ใส่ตัวอย่างแล้ว — กดวิเคราะห์ได้เลย");
+    toast("ใส่ตัวอย่างแล้ว — กดวิเคราะห์ได้เลย (บันทึกจะถูกกำกับว่าเป็นข้อมูลสาธิต)");
   };
 
   /* ------------------------------------------------------------------ */
@@ -1347,9 +1475,9 @@
     const ticks = [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
     const grid = ticks.map((v) => `
       <line x1="${padL - 6}" y1="${y(v)}" x2="${W - padR}" y2="${y(v)}"
-            stroke="var(--border)" stroke-width="1"/>
+            stroke="var(--line)" stroke-width="1"/>
       <text x="${padL - 11}" y="${y(v) + 4}" text-anchor="end"
-            font-family="var(--mono)" font-size="11" fill="var(--text-3)">${v}</text>`).join("");
+            font-family="var(--mono)" font-size="12" fill="var(--ink-3)">${v}</text>`).join("");
 
     const bars = monthly.map((m, i) => {
       const x = padL + slot * i + (slot - bw) / 2;
@@ -1358,16 +1486,16 @@
       const showYear = i === 0 || m.date.getMonth() === 0;
       return `
         ${m.risk ? `<rect x="${x}" y="${yRisk}" width="${bw}" height="${padT + plotH - yRisk}"
-              fill="var(--sev-high)" rx="3"/>` : ""}
+              fill="var(--crit)"/>` : ""}
         ${m.total - m.risk > 0 ? `<rect x="${x}" y="${yTop}" width="${bw}" height="${yRisk - yTop}"
-              fill="var(--brand)" opacity=".42" rx="3"/>` : ""}
+              fill="var(--ink-3)"/>` : ""}
         ${m.total ? `<text x="${cx}" y="${yTop - 7}" text-anchor="middle"
-              font-family="var(--mono)" font-size="11.5" font-weight="500"
-              fill="var(--text-2)">${m.total}</text>` : ""}
+              font-family="var(--mono)" font-size="12.5" font-weight="500"
+              fill="var(--ink-2)">${m.total}</text>` : ""}
         <text x="${cx}" y="${H - 19}" text-anchor="middle"
-              font-family="var(--sans)" font-size="11" fill="var(--text-3)">${esc(thMonth(m.date))}</text>
+              font-family="var(--sans)" font-size="12" fill="var(--ink-2)">${esc(thMonth(m.date))}</text>
         ${showYear ? `<text x="${cx}" y="${H - 5}" text-anchor="middle"
-              font-family="var(--mono)" font-size="10" fill="var(--text-3)">${m.date.getFullYear() + 543}</text>` : ""}`;
+              font-family="var(--mono)" font-size="12" fill="var(--ink-3)">${m.date.getFullYear() + 543}</text>` : ""}`;
     }).join("");
 
     return `<div class="trend-scroll"><svg viewBox="0 0 ${Math.round(W)} ${H}"
@@ -1377,9 +1505,10 @@
   function renderExec() {
     const box = $("#execBody");
     if (!history.length) {
-      box.innerHTML = `<div class="empty"><span class="empty-icon">📈</span>
+      box.innerHTML = `<div class="empty">
+        <svg class="ic ic-xl"><use href="#i-chart"/></svg>
         <p>ยังไม่มีข้อมูลให้สรุป</p>
-        <small>วิเคราะห์บทสัมภาษณ์แล้วติ๊ก “บันทึกลงประวัติ” ข้อมูลจะมาแสดงที่นี่</small></div>`;
+        <small>ออกบันทึกแล้วติ๊ก “ลงทะเบียน” ข้อมูลจะมาแสดงที่นี่</small></div>`;
       $("#execPeriodNote").textContent = "";
       return;
     }
@@ -1392,7 +1521,8 @@
       : `ข้อมูลทั้งหมด ${history.length} รายการ`;
 
     if (!k.total) {
-      box.innerHTML = `<div class="empty"><span class="empty-icon">📅</span>
+      box.innerHTML = `<div class="empty">
+        <svg class="ic ic-xl"><use href="#i-archive"/></svg>
         <p>ไม่มีการลาออกในช่วงเวลานี้</p>
         <small>ลองเลือกช่วงที่กว้างขึ้น</small></div>`;
       return;
@@ -1400,13 +1530,25 @@
 
     const maxTheme = x.themes.length ? x.themes[0].count : 1;
 
+    /* ตัวเลขเดียวที่ผู้บริหารต้องเห็นก่อนทุกอย่าง และเงียบรอบตัวเลขนั้น */
+    const leadDelta = !x.hasPrev
+      ? '<span class="lead-delta d-same">ยังไม่มีช่วงก่อนให้เทียบ</span>'
+      : k.total === k.totalPrev
+        ? '<span class="lead-delta d-same">เท่าช่วงก่อนหน้า</span>'
+        : `<span class="lead-delta ${k.total > k.totalPrev ? "d-worse" : "d-better"}">
+             ${k.total > k.totalPrev ? "เพิ่มขึ้น" : "ลดลง"} ${Math.abs(k.total - k.totalPrev)} คน
+             จาก ${k.totalPrev} คนในช่วงก่อนหน้า</span>`;
+
     box.innerHTML = `
-      <div class="kpi-grid">
-        <div class="kpi">
-          <div class="kpi-label">พนักงานลาออก</div>
-          <div class="kpi-row"><span class="kpi-num">${k.total}</span><span class="kpi-unit">คน</span></div>
-          <div class="kpi-row">${deltaPill(k.total, k.totalPrev, x.hasPrev)}</div>
+      <div class="lead-figure">
+        <div class="lead-num">${k.total}</div>
+        <div class="lead-side">
+          <p class="lead-cap">พนักงานลาออกในช่วงนี้ · <b>${k.preventablePct}%</b> อยู่ในวิสัยที่องค์กรรั้งไว้ได้</p>
+          ${leadDelta}
         </div>
+      </div>
+
+      <div class="kpi-grid">
         <div class="kpi">
           <div class="kpi-label">องค์กรน่าจะรั้งไว้ได้</div>
           <div class="kpi-row"><span class="kpi-num">${k.preventablePct}</span><span class="kpi-unit">%</span></div>
@@ -1429,22 +1571,22 @@
         <div class="trend">
           ${trendSVG(x.monthly)}
           <div class="legend">
-            <span><i style="background:var(--sev-high)"></i>มีประเด็นต้องสอบข้อเท็จจริง</span>
-            <span><i style="background:var(--brand);opacity:.45"></i>ลาออกตามปกติ</span>
+            <span><i style="background:var(--crit)"></i>มีประเด็นต้องสอบข้อเท็จจริง</span>
+            <span><i style="background:var(--ink-3)"></i>ลาออกตามปกติ</span>
           </div>
         </div>
       </div>
 
       ${x.themes.length ? `
       <div class="res-block">
-        <h3>ปัจจัยหลัก ${x.hasPrev ? "<em class=\"warn-note\" style=\"color:var(--text-3)\">ตัวเลขขวาสุดคือส่วนต่างจากช่วงก่อนหน้า</em>" : ""}</h3>
+        <h3>ปัจจัยหลัก ${x.hasPrev ? "<em class=\"count-note\">ตัวเลขขวาสุดคือส่วนต่างจากช่วงก่อนหน้า</em>" : ""}</h3>
         <div>
           ${x.themes.map((t) => `
             <div class="theme-row">
               <span class="theme-name">${esc(t.label)}
                 <em>${t.controllable ? "องค์กรแก้ไขได้" : "อยู่นอกการควบคุมขององค์กร"}</em>
               </span>
-              <span class="bar-track"><span class="bar-fill" style="width:${(t.count / maxTheme) * 100}%"></span></span>
+              <span class="bar-track"><span class="bar-fill ${sevClass(t.avgSeverity || 0)}" style="width:${(t.count / maxTheme) * 100}%"></span></span>
               <span class="theme-count">${t.count} คน · ${t.share}%</span>
               ${x.hasPrev ? deltaPill(t.count, t.prev, true) : ""}
             </div>`).join("")}
@@ -1492,7 +1634,7 @@
         <h3>ประเด็นที่ต้องสอบข้อเท็จจริง <em class="warn-note">ระบบตรวจจากคำสำคัญ ยังไม่ใช่ข้อสรุป</em></h3>
         ${x.urgent.slice(0, 8).map((u) => `
           <div class="flag">
-            <span>⚑</span>
+            <svg class="ic ic-sm"><use href="#i-flag"/></svg>
             <span><b>${esc(u.label)} · ${esc(u.who)}${u.department ? " · " + esc(u.department) : ""}</b>${esc(u.detail)}</span>
           </div>`).join("")}
         ${x.urgent.length > 8 ? `<p class="muted">และอีก ${x.urgent.length - 8} เรื่อง — ดูทั้งหมดได้ในแท็บประวัติ</p>` : ""}
@@ -1522,12 +1664,37 @@
   /* แท็บ                                                                */
   /* ------------------------------------------------------------------ */
 
-  $$(".tab").forEach((tab) => {
-    tab.addEventListener("click", () => {
-      $$(".tab").forEach((t) => t.classList.toggle("is-active", t === tab));
-      $$("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
-      if (tab.dataset.tab === "exec") renderExec();
+  const TABS = $$(".tab");
+
+  /** เปลี่ยนแท็บ: อัปเดตทั้งสถานะที่ตามองเห็นและสถานะที่โปรแกรมอ่านหน้าจอประกาศ
+      แล้วย้ายโฟกัสไปที่เนื้อหา เพื่อให้คนที่ใช้คีย์บอร์ดอ่านต่อได้ทันทีไม่ต้องไล่ Tab ใหม่ */
+  function selectTab(tab, moveFocus) {
+    TABS.forEach((t) => {
+      const on = t === tab;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      // roving tabindex: มีเพียงแท็บที่เลือกอยู่เท่านั้นที่รับโฟกัสด้วยปุ่ม Tab
+      if (on) t.removeAttribute("tabindex"); else t.setAttribute("tabindex", "-1");
     });
+    $$("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== tab.dataset.tab; });
+    if (tab.dataset.tab === "exec") renderExec();
+    // ลูกศรต้องทิ้งโฟกัสไว้ที่แท็บ ไม่ใช่กระโดดเข้าเนื้อหา
+    // ไม่งั้นกดลูกศรครั้งต่อไปจะไม่ทำงานเพราะโฟกัสออกจากแถบแท็บไปแล้ว
+    // ผู้ใช้กด Tab หนึ่งครั้งเพื่อเข้าไปในเนื้อหาเองตามแบบแผน ARIA
+    if (moveFocus) tab.focus();
+  }
+
+  TABS.forEach((tab) => tab.addEventListener("click", () => selectTab(tab, false)));
+
+  // ลูกศรซ้าย/ขวา เลื่อนแท็บ Home/End ไปหัวท้าย ตามแบบแผน ARIA ของแถบแท็บ
+  $(".rail-nav").addEventListener("keydown", (e) => {
+    const i = TABS.indexOf(document.activeElement);
+    if (i === -1) return;
+    const map = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1,
+                  Home: 0, End: TABS.length - 1 };
+    if (!(e.key in map)) return;
+    e.preventDefault();
+    selectTab(TABS[(map[e.key] + TABS.length) % TABS.length], true);
   });
 
   /* ------------------------------------------------------------------ */
@@ -1576,13 +1743,13 @@
       return;
     }
 
-    $("#modeChip").className = "chip chip-info";
-    $("#modeChip").textContent = "👥 ใช้งานร่วมกันทั้งทีม";
-    $("#modeChip").title = "ประวัติเก็บในฐานข้อมูลกลาง ทุกคนในทีมเห็นร่วมกัน";
+    $("#modeChip").innerHTML =
+      '<svg class="ic ic-sm"><use href="#i-team"/></svg>ทะเบียนกลาง';
+    $("#modeChip").title = "บันทึกเก็บในฐานข้อมูลกลาง ทุกคนในทีมเห็นทะเบียนชุดเดียวกัน";
     $("#teamHint").innerHTML =
-      "ประวัติทั้งหมดอยู่ในฐานข้อมูลกลาง <b>ทุกคนในทีมเห็นข้อมูลชุดเดียวกันทันที</b> ไม่ต้องส่งไฟล์หากัน " +
+      "บันทึกทั้งหมดอยู่ในทะเบียนกลาง <b>ทุกคนในทีมเห็นชุดเดียวกันทันที</b> ไม่ต้องส่งไฟล์หากัน " +
       "· ปุ่มส่งออก/นำเข้ายังใช้ได้สำหรับสำรองข้อมูล หรือดึงงานเก่าจากเครื่องที่เคยใช้โหมดออฟไลน์เข้ามารวม " +
-      "· ปุ่มล้างจะลบเฉพาะรายการที่คุณสร้างเอง";
+      "· ปุ่มล้างจะลบเฉพาะบันทึกที่คุณลงทะเบียนเอง";
 
     Cloud.onAuthChange(showApp);
     showApp(await Cloud.currentSession());

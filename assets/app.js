@@ -378,6 +378,12 @@
         </div>
       </dl>
 
+      ${rec.raw ? `
+      <details class="transcript">
+        <summary>บทสัมภาษณ์ต้นฉบับทั้งหมด <span class="count-note">${rec.raw.length.toLocaleString("th-TH")} ตัวอักษร</span></summary>
+        <div class="transcript-body">${esc(rec.raw)}</div>
+      </details>` : ""}
+
       <p class="rec-warn">
         <svg class="ic ic-sm"><use href="#i-info"/></svg>
         <span>บันทึกนี้สรุปด้วยการจับคำสำคัญอัตโนมัติ ไม่ใช่การตีความของมนุษย์
@@ -589,7 +595,7 @@
             </span>
             <span class="muted">${esc(shortDate(r.at))}</span>
           </summary>
-          <div class="batch-body">${renderSummary(s2, r.meta, { no, at: r.at })}</div>
+          <div class="batch-body">${renderSummary(s2, r.meta, { no, at: r.at, raw: r.raw_text })}</div>
         </details>`;
     }).join("");
   }
@@ -1356,7 +1362,7 @@
               <span class="badge-tone ${sent.tone}">${esc(sent.th)}</span>
             </span>
           </summary>
-          <div class="batch-body">${renderSummary(s, m, { no: n + 1, at: x.r.at })}</div>
+          <div class="batch-body">${renderSummary(s, m, { no: n + 1, at: x.r.at, raw: x.r.raw_text })}</div>
         </details>`;
     }).join("");
   }

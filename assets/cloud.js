@@ -83,6 +83,9 @@
         interview_date: row.interview_date,
       },
       summary: row.summary,
+      // เขียนลงฐานข้อมูลอยู่แล้วแต่เดิมไม่เคยอ่านกลับ ทำให้ทะเบียนในโหมดใช้ร่วมกัน
+      // ไม่มีบทสัมภาษณ์ต้นฉบับติดมาด้วยเลย
+      raw_text: row.raw_text || null,
     };
   }
 

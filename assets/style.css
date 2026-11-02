@@ -505,6 +505,24 @@ input:focus, select:focus, textarea:focus { outline: none; box-shadow: inset 0 0
 .more > summary:hover { background: var(--sunk-2); color: var(--ink); }
 .more-body { padding-top: var(--s5); }
 
+/* ---------- บทสัมภาษณ์ต้นฉบับ ---------- */
+.transcript { margin-top: var(--s4); }
+.transcript > summary {
+  cursor: pointer; font: 600 14.5px var(--sans); color: var(--ink-2);
+  padding: var(--s2) var(--s4); background: var(--sunk); border-radius: var(--rp);
+  list-style-position: inside; display: inline-block;
+  transition: background .2s ease, color .2s ease;
+}
+.transcript > summary:hover { background: var(--sunk-2); color: var(--ink); }
+.transcript > summary .count-note { margin-left: var(--s1); }
+.transcript-body {
+  margin-top: var(--s3); padding: var(--s4) var(--s5);
+  background: var(--sunk); border-radius: var(--r3);
+  font-size: 15.5px; line-height: 2; color: var(--ink-2);
+  white-space: pre-wrap;       /* ฟอร์มสัมภาษณ์ใช้การขึ้นบรรทัดแบ่งคำถาม-คำตอบ */
+  overflow-wrap: anywhere;     /* กันคำยาวผิดปกติดันกล่องจนล้น */
+}
+
 /* ---------- คำเตือนความแม่น — ห้ามหาย ---------- */
 .rec-warn {
   margin-top: var(--s4); padding: var(--s3) var(--s4);

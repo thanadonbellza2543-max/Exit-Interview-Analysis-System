@@ -502,7 +502,10 @@
       const score = hits + richness;
       if (score > bestScore) { bestScore = score; best = i; }
     });
-    return best === -1 ? null : snippet(parents[best], words, 190);
+    // คืนประโยคเต็ม ไม่ตัดกลางทาง เพราะนี่คือหลักฐานที่ HR ต้องอ่านจริง
+    // 190 ตัวอักษรเดิมตัดคาประโยคจนอ่านไม่รู้เรื่อง ต้องเปิดไฟล์ต้นฉบับประกบ
+    // เหลือเพดาน 800 ไว้กันกรณีคำตอบในฟอร์มยาวผิดปกติจนท่วมการ์ด
+    return best === -1 ? null : snippet(parents[best], words, 800);
   }
 
   function pickEvidence(sentences, words) {

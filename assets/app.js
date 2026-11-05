@@ -90,7 +90,7 @@
     if (!STORAGE_OK) return false;
     try { localStorage.setItem(key, JSON.stringify(value)); return true; }
     catch (e) {
-      toast("พื้นที่จัดเก็บในเบราว์เซอร์เต็ม — กรุณาสำรองข้อมูลแล้วล้างประวัติเก่า");
+      toast("พื้นที่จัดเก็บในเบราว์เซอร์เต็ม สำรองข้อมูลแล้วล้างทะเบียนเก่าก่อน");
       return false;
     }
   }
@@ -107,7 +107,7 @@
     });
     const msg = `เบราว์เซอร์นี้ไม่อนุญาตให้เก็บข้อมูลในเครื่อง จึงใช้ประวัติไม่ได้
       (พบบ่อยเมื่อเปิดไฟล์ตรงด้วย file:// หรืออยู่ในโหมดส่วนตัว)
-      — การวิเคราะห์และการส่งออกไฟล์ยังทำงานได้ครบ
+      การวิเคราะห์และการส่งออกไฟล์ยังทำงานได้ครบ
       ถ้าต้องการเก็บประวัติ ให้เปิดผ่าน GitHub Pages หรือเซิร์ฟเวอร์ในเครื่อง`;
     $("#historyList").innerHTML = `<div class="notice notice-warn">${esc(msg)}</div>`;
     $(".work").insertAdjacentHTML("afterbegin",
@@ -128,7 +128,7 @@
     /* สรุปด้านบนบอกทันทีว่าเหลืออีกกี่หมวด ไม่ต้องไล่อ่านทีละใบ */
     const summary = `<p class="lex-summary">
       <b>${done}</b> จาก <b>${keys.length}</b> หมวดมีคำของศูนย์นี้เพิ่มไว้แล้ว
-      ${done ? "" : "— ยังไม่ได้เพิ่มเลย ระบบจะใช้คำมาตรฐานอย่างเดียว"}
+      ${done ? "" : "ระบบจึงใช้คำมาตรฐานอย่างเดียว"}
     </p>`;
 
     $("#lexiconList").innerHTML = summary + `<div class="lex-grid">` + keys.map((k) => {
@@ -239,7 +239,7 @@
     return `
       <div class="rec">
         ${meta.demo ? `<p class="demo-band">
-          <svg class="ic ic-sm"><use href="#i-info"/></svg>ข้อมูลตัวอย่าง — แต่งขึ้นเพื่อสาธิต ไม่ใช่พนักงานจริง
+          <svg class="ic ic-sm"><use href="#i-info"/></svg>ข้อมูลตัวอย่าง แต่งขึ้นเพื่อสาธิต ไม่ใช่พนักงานจริง
         </p>` : ""}
 
         <div class="rec-head">
@@ -262,7 +262,7 @@
         <div class="verdict-meter">${dots(top.severity, true)}<span>ความรุนแรง ${esc(top.severity)} จาก 5</span></div>
         ${top.evidence ? `<blockquote class="evidence">${esc(top.evidence)}</blockquote>` : ""}
       </div>` : `
-      <div class="notice notice-warn">ไม่พบคำสำคัญที่ตรงกับหมวดใดเลย — ต้องอ่านบทสัมภาษณ์ต้นฉบับเอง
+      <div class="notice notice-warn">ไม่พบคำสำคัญที่ตรงกับหมวดใดเลย ต้องอ่านบทสัมภาษณ์ต้นฉบับเอง
       หรือเพิ่มคำเฉพาะของศูนย์ในแท็บ “คำสำคัญ”</div>`}
 
       ${urgent.length ? `
@@ -276,7 +276,7 @@
             <b>${esc(f.label)}</b>
             <span>${esc(f.detail)}</span>
           </div>`).join("")}
-        <div class="alert-foot">ระบบตรวจจากคำสำคัญเท่านั้น ยังไม่ใช่ข้อสรุป — HR ต้องสอบกับคนจริงก่อนเสมอ</div>
+        <div class="alert-foot">ระบบจับได้แค่คำสำคัญ HR ต้องสอบกับคนจริงก่อนทุกครั้ง</div>
       </div>` : ""}
 
       <dl class="fields">
@@ -314,7 +314,7 @@
       </div>` : ""}
 
       <details class="more">
-        <summary>ดูรายละเอียดทั้งหมด — สรุปย่อ · คำพูดสำคัญ · สิ่งที่ชื่นชม</summary>
+        <summary>ดูรายละเอียดทั้งหมด: สรุปย่อ คำพูดสำคัญ สิ่งที่ชื่นชม</summary>
         <div class="more-body">
           <div class="res-block">
             <h3>สรุปย่อ</h3>
@@ -386,9 +386,9 @@
 
       <p class="rec-warn">
         <svg class="ic ic-sm"><use href="#i-info"/></svg>
-        <span>บันทึกนี้สรุปด้วยการจับคำสำคัญอัตโนมัติ ไม่ใช่การตีความของมนุษย์
-        และยังไม่ใช่ข้อสรุปทางวินัยหรือข้อเท็จจริงที่ยืนยันแล้ว —
-        ต้องอ่านบทสัมภาษณ์ต้นฉบับยืนยันก่อนนำไปใช้ตัดสินใจเรื่องบุคคลทุกครั้ง</span>
+        <span>บันทึกนี้มาจากการจับคำสำคัญอัตโนมัติ ยังไม่ผ่านการตีความของคน
+        และยังไม่ใช่ข้อเท็จจริงที่ยืนยันแล้ว
+        ต้องอ่านบทสัมภาษณ์ต้นฉบับยืนยันก่อนใช้ตัดสินใจเรื่องบุคคลทุกครั้ง</span>
       </p>
       </div>
     `;
@@ -407,7 +407,7 @@
     if (s.reason_categories.length) {
       L.push("", "หมวดปัจจัย:");
       s.reason_categories.forEach((c) =>
-        L.push(`  - ${c.label} (${c.severity}/5)` + (c.evidence ? ` — ${c.evidence}` : "")));
+        L.push(`  - ${c.label} (${c.severity}/5)` + (c.evidence ? `: ${c.evidence}` : "")));
     }
     if (s.risk_flags.length) {
       L.push("", "ประเด็นเฝ้าระวัง (ต้องสอบข้อเท็จจริงก่อน):");
@@ -417,7 +417,7 @@
       L.push("", "ข้อเสนอแนะตั้งต้น:");
       s.action_items.forEach((a) => L.push(`  - [${OWNERS[a.owner] || a.owner}] ${a.action}`));
     }
-    L.push("", "— วิเคราะห์ด้วยระบบคำสำคัญอัตโนมัติ ต้องตรวจทานกับต้นฉบับก่อนนำไปใช้ —");
+    L.push("", "(วิเคราะห์ด้วยระบบคำสำคัญอัตโนมัติ ต้องตรวจทานกับต้นฉบับก่อนนำไปใช้)");
     return L.join("\n");
   }
 
@@ -628,7 +628,7 @@
 
     if (CLOUD) {
       const mine = history.filter((r) => r.mine).length;
-      if (!mine) return toast("ไม่มีรายการที่คุณสร้างเอง — ลบของคนอื่นไม่ได้");
+      if (!mine) return toast("ไม่มีบันทึกที่คุณเป็นผู้ลงทะเบียน ของคนอื่นลบไม่ได้");
       if (!confirm(`ลบ ${mine} รายการที่คุณสร้างออกจากฐานข้อมูลกลางถาวร?\n\nรายการของคนอื่นจะไม่ถูกแตะต้อง`)) return;
       try {
         const n = await Cloud.clearMine();
@@ -750,7 +750,7 @@
   $("#runSingle").addEventListener("click", async () => {
     const text = rawText.value.trim();
     if (text.length < 30) {
-      return setFieldError("ข้อความสั้นเกินไป — ต้องมีอย่างน้อย 30 ตัวอักษร ตอนนี้มี "
+      return setFieldError("ข้อความสั้นเกินไป ต้องมีอย่างน้อย 30 ตัวอักษร ตอนนี้มี "
         + text.length.toLocaleString("th-TH") + " ตัวอักษร");
     }
     setFieldError("");
@@ -767,7 +767,7 @@
       if ($("#saveHistory").checked) {
         const res = await addHistory([lastSingle]);
         toast(res.added ? "วิเคราะห์เสร็จ และลงทะเบียนแล้ว"
-                        : "วิเคราะห์เสร็จ — รายการนี้มีอยู่แล้ว จึงไม่บันทึกซ้ำ");
+                        : "วิเคราะห์เสร็จ บันทึกนี้มีในทะเบียนอยู่แล้ว จึงไม่ลงซ้ำ");
       } else {
         toast("วิเคราะห์เสร็จแล้ว");
       }
@@ -843,12 +843,12 @@
     try {
       if (/\.(xlsx|xls)$/i.test(file.name)) {
         if (typeof XLSX === "undefined") {
-          return toast("อ่าน .xlsx ไม่ได้ในโหมดออฟไลน์ — ให้ Save As เป็น .txt ก่อน หรือเปิดหน้านี้ผ่านเซิร์ฟเวอร์");
+          return toast("อ่าน .xlsx ไม่ได้ในโหมดออฟไลน์ ให้ Save As เป็น .txt ก่อน หรือเปิดหน้านี้ผ่านเซิร์ฟเวอร์");
         }
         const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
         const form = parseFormWorkbook(wb.Sheets[wb.SheetNames[0]]);
         if (!form) {
-          return toast("ไฟล์นี้ไม่ใช่ฟอร์มสัมภาษณ์ — ถ้าเป็นตารางรวมหลายคน ให้ใช้แท็บ “ทั้งไฟล์”");
+          return toast("ไฟล์นี้ไม่ใช่ฟอร์มสัมภาษณ์ ถ้าเป็นตารางรวมหลายคน ให้ใช้แท็บ “หลายคน”");
         }
         if (form.text.length < 40) {
           return toast("ฟอร์มนี้ยังไม่ได้กรอกคำตอบ");
@@ -858,7 +858,7 @@
         rawText.value = form.text;
         applyMeta(form.meta);
         rawText.dispatchEvent(new Event("input"));
-        return toast(`อ่านฟอร์มของ ${form.meta.employee_name || file.name} แล้ว — กดวิเคราะห์ได้เลย`);
+        return toast(`อ่านฟอร์มของ ${form.meta.employee_name || file.name} แล้ว กดวิเคราะห์ได้เลย`);
       }
 
       importedMeta = null;
@@ -919,7 +919,7 @@
   let batchDemo = false;   // ตารางที่โหลดมาเป็นชุดตัวอย่างที่แถมมากับระบบหรือไม่
 
   if (typeof XLSX === "undefined") {
-    $("#xlsxNote").innerHTML = '<span class="muted">(.xlsx ต้องต่อเน็ตครั้งแรก — ตอนนี้ใช้ได้เฉพาะ CSV กรุณา Save As เป็น CSV UTF-8)</span>';
+    $("#xlsxNote").innerHTML = '<span class="muted">(.xlsx ต้องต่อเน็ตครั้งแรก ตอนนี้ใช้ได้เฉพาะ CSV ให้ Save As เป็น CSV UTF-8)</span>';
     $("#batchFile").accept = ".csv,.tsv";
   }
 
@@ -1025,7 +1025,7 @@
           continue;
         }
         if (typeof XLSX === "undefined") {
-          failed.push(`${file.name} — อ่าน .xlsx ไม่ได้ในโหมดออฟไลน์ ให้ Save As เป็น CSV UTF-8 ก่อน`);
+          failed.push(`${file.name}: อ่าน .xlsx ไม่ได้ในโหมดออฟไลน์ ให้ Save As เป็น CSV UTF-8 ก่อน`);
           continue;
         }
         const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
@@ -1034,7 +1034,7 @@
         if (form) forms.push({ name: file.name, ...form });
         else tables.push({ name: file.name, rows: XLSX.utils.sheet_to_json(ws, { defval: "" }) });
       } catch (err) {
-        failed.push(`${file.name} — ${err.message}`);
+        failed.push(`${file.name}: ${err.message}`);
       }
     }
 
@@ -1051,7 +1051,7 @@
     if (!table) {
       return toast(failed.length ? failed[0] : "ไม่พบข้อมูลในไฟล์ที่เลือก");
     }
-    if (tables.length > 1) toast(`ไฟล์ตารางรองรับทีละไฟล์ — ใช้ ${table.name}`);
+    if (tables.length > 1) toast(`ไฟล์ตารางรองรับทีละไฟล์ ใช้ ${table.name}`);
 
     batchRows = table.rows;
     batchDemo = /^sample-data\.csv$/i.test(table.name);
@@ -1084,7 +1084,7 @@
           · ${f.sections} หมวด · ${f.text.length.toLocaleString("th-TH")} ตัวอักษร</div>
         ${f.text.length >= 40
           ? `<div class="form-text">${esc(f.text.slice(0, 400))}${f.text.length > 400 ? "…" : ""}</div>`
-          : `<div class="form-bad">ไม่มีคำตอบในฟอร์มนี้ — ระบบจะข้ามไป</div>`}
+          : `<div class="form-bad">ไม่มีคำตอบในฟอร์มนี้ ระบบจะข้ามไป</div>`}
       </div>`;
     }).join("");
 
@@ -1454,7 +1454,7 @@
 ตอบ: ถ้าเรื่องเส้นทางอาชีพชัดเจนกว่านี้ก็อาจจะกลับมาครับ ผมก็ยังแนะนำเพื่อนให้มาสมัครอยู่นะ แต่จะบอกตามตรงว่าอย่าหวังเรื่องโปรโมทเร็ว`;
     demoData = true;
     rawText.dispatchEvent(new Event("input"));
-    toast("ใส่ตัวอย่างแล้ว — กดวิเคราะห์ได้เลย (บันทึกจะถูกกำกับว่าเป็นข้อมูลสาธิต)");
+    toast("ใส่ตัวอย่างแล้ว กดวิเคราะห์ได้เลย บันทึกจะมีป้ายกำกับว่าเป็นข้อมูลตัวอย่าง");
   };
 
   /* ------------------------------------------------------------------ */
@@ -1570,7 +1570,7 @@
         <div class="kpi">
           <div class="kpi-label">องค์กรน่าจะรั้งไว้ได้</div>
           <div class="kpi-row"><span class="kpi-num">${k.preventablePct}</span><span class="kpi-unit">%</span></div>
-          <div class="kpi-note">${k.preventable} คน — ปัญหาอยู่ในวิสัยที่แก้ได้</div>
+          <div class="kpi-note">${k.preventable} คน ปัญหาอยู่ในวิสัยที่แก้ได้</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">ประเด็นต้องสอบข้อเท็จจริง</div>
@@ -1655,7 +1655,7 @@
             <svg class="ic ic-sm"><use href="#i-flag"/></svg>
             <span><b>${esc(u.label)} · ${esc(u.who)}${u.department ? " · " + esc(u.department) : ""}</b>${esc(u.detail)}</span>
           </div>`).join("")}
-        ${x.urgent.length > 8 ? `<p class="muted">และอีก ${x.urgent.length - 8} เรื่อง — ดูทั้งหมดได้ในแท็บประวัติ</p>` : ""}
+        ${x.urgent.length > 8 ? `<p class="muted">และอีก ${x.urgent.length - 8} เรื่อง ดูทั้งหมดได้ในแท็บทะเบียน</p>` : ""}
       </div>` : ""}
 
       <p class="muted">สรุปจาก ${k.total} บทสัมภาษณ์ที่บันทึกไว้ในระบบ ·
@@ -1755,7 +1755,7 @@
       // โหมดออฟไลน์ — ไม่ต้องล็อกอิน ข้อมูลอยู่ในเครื่องนี้เท่านั้น
       applyStorageState();
       if (window.Cloud && window.Cloud.configured && !window.Cloud.libReady) {
-        toast("ตั้งค่า Supabase ไว้แล้ว แต่โหลดไลบรารีไม่ได้ — กำลังทำงานแบบออฟไลน์");
+        toast("ตั้งค่า Supabase ไว้แล้ว แต่โหลดไลบรารีไม่ได้ ตอนนี้ทำงานแบบออฟไลน์");
       }
       await loadHistory();
       return;
